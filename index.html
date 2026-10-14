@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SQL Тренажёр</title>
+<script src="alasql.min.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f7f7fb;--card:#fff;--text:#0d0d12;--mute:#67677a;--line:#e8e8f0;--acc:#3d3bff;--acc2:#fcaca9;--ok:#0ea472;--bad:#e5484d;--code:#f2f3f9;
+--pt1:#eef0ff;--pt2:#ffe9e8;--pt3:#e2f7ee;--pt4:#f3ecff;
+--shadow:0 8px 30px rgba(20,20,70,.08);--grad:linear-gradient(90deg,var(--acc),var(--acc2));--bgrad:linear-gradient(180deg,#c6ceff 0%,#e6ebff 380px,#f7f7fb 760px);
+--sqlbg:#f6f7fd;--sqlhead:#ebedfa;--sqltext:#26264a;--sqlmute:#67677a;--sqlline:#dfe1f4;--sqlkbdbg:#ffffff;--sqlkbdline:#d5d8ee;--sqlkbdtext:#5a5a78}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1020;--card:#171a2e;--text:#eceefb;--mute:#8e93b5;--line:#272b47;--acc:#7c7cff;--acc2:#fcaca9;--ok:#3ddc97;--bad:#ff6b70;--code:#10132a;--pt1:#1c1f3d;--pt2:#2b1b26;--pt3:#142a24;--pt4:#221a35;--shadow:0 8px 30px rgba(0,0,0,.4);--bgrad:linear-gradient(180deg,#1b2046 0%,#12142e 420px,#0e1020 760px);--sqlbg:#10152b;--sqlhead:#171c33;--sqltext:#e8ebff;--sqlmute:#8e93b5;--sqlline:#232947;--sqlkbdbg:#0b0f22;--sqlkbdline:#2a3155;--sqlkbdtext:#aab0d8}}
+:root[data-theme="dark"]{--bg:#0e1020;--card:#171a2e;--text:#eceefb;--mute:#8e93b5;--line:#272b47;--acc:#7c7cff;--acc2:#fcaca9;--ok:#3ddc97;--bad:#ff6b70;--code:#10132a;--pt1:#1c1f3d;--pt2:#2b1b26;--pt3:#142a24;--pt4:#221a35;--shadow:0 8px 30px rgba(0,0,0,.4);--bgrad:linear-gradient(180deg,#1b2046 0%,#12142e 420px,#0e1020 760px);--sqlbg:#10152b;--sqlhead:#171c33;--sqltext:#e8ebff;--sqlmute:#8e93b5;--sqlline:#232947;--sqlkbdbg:#0b0f22;--sqlkbdline:#2a3155;--sqlkbdtext:#aab0d8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);min-height:100vh;color:var(--text);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+header{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:22px 16px;border-right:1px solid var(--line);background:var(--card);position:fixed;inset:0 auto 0 0;width:250px;overflow-y:auto;z-index:40}
+.logo{font-weight:800;font-size:20px;letter-spacing:-.02em;color:var(--text);white-space:nowrap;padding:0 12px;margin-bottom:16px}
+.logo b{color:var(--acc)}
+nav{display:flex;flex-direction:column;gap:4px;flex:1;margin-bottom:12px}
+nav button{display:flex;align-items:center;gap:12px;text-align:left;padding:11px 14px;border-radius:14px;border:0;background:transparent;color:var(--mute);font-weight:600}
+nav button svg{width:18px;height:18px;flex:none}
+nav button:hover{background:var(--code);color:var(--text)}
+nav button.on{background:var(--acc);color:#fff;box-shadow:0 8px 20px color-mix(in srgb,var(--acc) 30%,transparent)}
+.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--text);padding:9px 18px;border-radius:12px;cursor:pointer;font-weight:600}
+.btn svg{width:16px;height:16px;vertical-align:-3px}
+.btn.p{background:var(--acc);color:#fff;border-color:transparent}
+.btn.p:hover:not(:disabled){background:color-mix(in srgb,var(--acc) 88%,#000)}
+.btn:disabled{opacity:.5;cursor:default}
+#acct{align-self:flex-start;margin:0 12px 8px}
+main{max-width:1400px;margin:0 auto;padding:24px 28px 24px 278px}
+.view{display:none}.view.on{display:block}
+.grid{display:grid;grid-template-columns:300px 1fr;gap:20px}
+.side{display:flex;flex-direction:column;gap:20px;min-width:0}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:24px;background:linear-gradient(120deg,#3d3bff 0%,#6f5bff 60%,#8b5cf6 100%);border-radius:24px;padding:22px 32px;color:#fff;margin-bottom:18px;box-shadow:0 18px 44px rgba(61,59,255,.25);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;right:6%;top:-90px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.10)}
+.hero::after{content:'';position:absolute;right:16%;bottom:-130px;width:200px;height:200px;border-radius:50%;background:rgba(252,172,169,.28)}
+.hero h1{margin:0 0 6px;font-size:26px;font-weight:800;letter-spacing:-.02em;position:relative;z-index:1}
+.hero p{margin:0;opacity:.92;max-width:520px;position:relative;z-index:1}
+.htag{font-size:12px;font-weight:700;letter-spacing:.14em;opacity:.85;margin-bottom:10px;position:relative;z-index:1}
+.htag2{display:inline-block;margin-top:14px;background:rgba(255,255,255,.18);padding:5px 14px;border-radius:999px;font-size:12px;font-weight:600;position:relative;z-index:1}
+@media(max-width:720px){.hero h1{font-size:26px}.hero{padding:24px}}
+@media(max-width:960px){.grid{grid-template-columns:1fr}header{position:static;width:auto;flex-direction:row;align-items:center;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--line)}nav{flex-direction:row;flex-wrap:wrap}main{padding:20px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:24px;min-width:0;box-shadow:var(--shadow)}
+h2,h3{margin:0 0 12px}h2{font-size:24px;font-weight:800;letter-spacing:-.02em}h3{font-size:13px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
+.task{display:flex;gap:10px;align-items:center;padding:11px 14px;border-radius:16px;cursor:pointer;border:1px solid var(--line);background:var(--card);margin-bottom:8px;box-shadow:0 2px 8px rgba(20,20,70,.04)}
+.task:hover{border-color:var(--acc)}
+.task.on{background:var(--acc);border-color:transparent;color:#fff;box-shadow:0 8px 20px color-mix(in srgb,var(--acc) 35%,transparent)}
+.task.on .dot{border-color:rgba(255,255,255,.6)}
+.task.on .dot.ok{background:#fff;border-color:#fff}
+.tmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#tcount{color:var(--mute);font-size:12px;font-weight:600}
+.sqlbox{background:var(--sqlbg);border:1px solid var(--sqlline);border-radius:16px;overflow:hidden;margin-top:12px}
+.sqlhead{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--sqlhead);color:var(--sqlmute);font-size:12px;font-weight:600;letter-spacing:.05em}
+.sqlbox textarea{background:transparent;border:0;border-radius:0;color:var(--sqltext);min-height:150px}
+.sqlbox textarea:focus{outline:none}
+.kbdhint kbd{background:var(--sqlkbdbg);border:1px solid var(--sqlkbdline);border-radius:6px;padding:1px 7px;font:11px ui-monospace,Menlo,monospace;color:var(--sqlkbdtext)}
+.res{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--card);max-height:300px;overflow:auto}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-top:8px}
+#td{background:var(--code);border-radius:12px;padding:12px 16px;margin-top:10px;line-height:1.55}
+@media(max-width:1050px){.rgrid{grid-template-columns:1fr}}
+.task .n{flex:1;font-size:14px;font-weight:500}
+.tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--code);color:var(--mute)}
+.tag.ai{background:var(--grad);color:#fff}
+.tag.lv1{background:var(--pt3);color:var(--ok)}
+.tag.lv2{background:var(--pt1);color:var(--acc)}
+.tag.lv3{background:var(--pt2);color:#d6413d}
+.dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--line)}.dot.ok{background:var(--ok);border-color:var(--ok)}
+textarea{width:100%;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:14px;resize:vertical;min-height:130px}
+textarea:focus,select:focus,input:focus{outline:2px solid var(--acc);border-color:transparent}
+select,input{font:inherit;background:var(--code);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+.row{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;align-items:center}
+.res{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;font-size:13px;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;white-space:nowrap}
+th{color:var(--mute);font-weight:600}
+.msg{padding:12px 16px;border-radius:14px;margin-top:12px;font-size:14px}
+.msg.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.msg.bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.msg.info{background:var(--code);color:var(--mute)}
+.tbl{margin-bottom:12px}.tbl b{font-size:13px}.tbl div{font:12px ui-monospace,Menlo,monospace;color:var(--mute);word-break:break-word}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.res-grid a{display:block;padding:20px;border:1px solid var(--line);border-radius:20px;color:inherit;text-decoration:none;background:var(--card)}
+.res-grid a:nth-child(4n+1){background:var(--pt1)}
+.res-grid a:nth-child(4n+2){background:var(--pt2)}
+.res-grid a:nth-child(4n+3){background:var(--pt3)}
+.res-grid a:nth-child(4n+4){background:var(--pt4)}
+.res-grid a:hover{border-color:var(--acc)}.res-grid b{display:block;margin-bottom:6px;font-size:16px;color:var(--acc)}.res-grid span{font-size:13px;color:var(--mute)}
+.res-grid a .tag{margin-left:6px}
+details{margin-top:8px}summary{cursor:pointer;color:var(--acc);font-weight:600}
+pre{background:var(--code);padding:12px;border-radius:12px;overflow-x:auto;margin:8px 0 0}
+.qitem{border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin:16px 0;background:color-mix(in srgb,var(--code) 35%,transparent);animation:fadeUp .4s cubic-bezier(.22,1,.36,1) backwards;animation-delay:calc(var(--i,0)*60ms)}
+.qitem .qq{display:flex;gap:10px;align-items:flex-start;font-weight:700;margin-bottom:12px;line-height:1.45}
+.qn{flex:none;width:26px;height:26px;border-radius:8px;background:var(--pt1);color:var(--acc);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-top:-2px}
+.qopt{display:flex;gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--line);border-radius:12px;margin:6px 0;cursor:pointer;background:var(--card);transition:all .18s ease;user-select:none}
+.qopt:hover{border-color:var(--acc);transform:translateX(3px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.qopt input[type=radio]{appearance:none;-webkit-appearance:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:transparent;margin:0;padding:0;flex:none;cursor:pointer;transition:border-color .2s,box-shadow .2s,background .2s}
+.qopt input[type=radio]:checked{border-color:var(--acc);background:radial-gradient(circle,var(--acc) 0 4.5px,transparent 5.5px)}
+.qopt input[type=radio]:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
+.qopt:has(input:checked){border-color:var(--acc);background:color-mix(in srgb,var(--acc) 9%,transparent)}
+.qopt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.qopt.ok input[type=radio]{border-color:var(--ok)}
+.qopt.ok input[type=radio]:checked{background:radial-gradient(circle,var(--ok) 0 4.5px,transparent 5.5px)}
+.qopt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
+.qopt.bad input[type=radio]{border-color:var(--bad)}
+.qopt.bad input[type=radio]:checked{background:radial-gradient(circle,var(--bad) 0 4.5px,transparent 5.5px)}
+.qexp{font-size:13px;color:var(--mute);margin-top:10px;line-height:1.5;border-left:3px solid var(--acc);padding-left:12px}
+.qverdict{margin-top:18px;border-radius:16px;padding:22px;text-align:center;animation:pop .35s cubic-bezier(.22,1,.36,1) backwards}
+.qverdict .qbig{font-size:32px;font-weight:800;letter-spacing:-.02em}
+.qverdict.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.qverdict.mid{background:var(--code);color:var(--text)}
+.qverdict.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.prog{height:8px;background:var(--code);border-radius:99px;overflow:hidden;margin:10px 0 14px}.prog i{display:block;height:100%;background:var(--grad);width:0;transition:width .5s}
+#aisettings-btn{display:none;position:fixed;right:16px;bottom:16px;z-index:60;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:20px;cursor:pointer;box-shadow:0 2px 14px rgba(0,0,0,.28)}
+#aisettings-btn:hover{border-color:var(--acc)}
+#aipanel{position:fixed;right:16px;bottom:72px;z-index:60;width:min(340px,92vw);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;display:none;box-shadow:0 10px 34px rgba(0,0,0,.35)}
+#aipanel.on{display:block;animation:pop .22s ease both}
+
+/* --- Практика: лента задач сверху + двухколоночный рабочий стол --- */
+.tcard{padding:16px 20px;margin-bottom:20px}
+.tstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.tstrip::-webkit-scrollbar{height:6px}
+.tstrip::-webkit-scrollbar-track{background:transparent}
+.tstrip::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.tstrip::-webkit-scrollbar-thumb:hover{background:var(--mute)}
+.tstrip .task{flex:0 0 auto;margin:0;padding:8px 14px;border-radius:999px;gap:8px;box-shadow:none;scroll-margin:0 40px}
+.tstrip .task:hover{transform:translateY(-2px)}
+.tstrip .task .n{font-size:13px;white-space:nowrap}
+.tnum{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:6px;font-size:11px;font-weight:700;padding:0 5px}
+.tnum.lv1{background:var(--pt3);color:var(--ok)}
+.tnum.lv2{background:var(--pt1);color:var(--acc)}
+.tnum.lv3{background:var(--pt2);color:#d6413d}
+.task.on .tnum{background:rgba(255,255,255,.22);color:#fff}
+.tdel{cursor:pointer;opacity:.45;font-size:16px;line-height:1;padding:2px 5px;border-radius:6px;color:inherit;transition:opacity .18s,background .18s}
+.task:hover .tdel,.task.on .tdel{opacity:.75}
+.tdel:hover{opacity:1!important;background:rgba(228,72,77,.3);color:#fff}
+.pgrid{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:20px;align-items:start}
+.pside{display:flex;flex-direction:column;gap:20px;min-width:0}
+.pside .card,.pwork{padding:20px}
+.expbox{margin-top:14px;padding-top:4px;border-top:1px dashed var(--line)}
+.sqlbox textarea{min-height:190px}
+#exp .res{max-height:260px}
+#out .res{max-height:380px}
+@media(max-width:1100px){.pgrid{grid-template-columns:1fr}}
+
+/* Тонкие скроллбары в цвет темы */
+html{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--mute);border:3px solid transparent;background-clip:content-box}
+
+/* Плавные переходы и анимации */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{opacity:0;transform:scale(.95) translateY(8px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+html{scroll-behavior:smooth}
+body{transition:background-color .35s ease,color .35s ease}
+header{transition:background-color .35s,border-color .35s}
+.card{transition:transform .25s ease,box-shadow .25s ease,background-color .35s,border-color .35s}
+/* Плавные входные анимации: вкладки, карточки, модальные окна */
+.view.on>*{animation:fadeUp .5s cubic-bezier(.22,1,.36,1) backwards}
+.view.on>*:nth-child(2){animation-delay:.07s}
+.view.on>*:nth-child(3){animation-delay:.14s}
+.view.on .pgrid,.view.on #sbgrid,.view.on #links{animation:none}
+.view.on .pgrid>.pside>.card,.view.on .pgrid>.pwork,.view.on #sbgrid>.card{animation:fadeUp .55s cubic-bezier(.22,1,.36,1) backwards;animation-delay:.14s}
+.view.on .pgrid>.pside>.card:nth-child(2),.view.on #sbgrid>.card:nth-child(2){animation-delay:.21s}
+.view.on .pgrid>.pside>.card:nth-child(3){animation-delay:.28s}
+.view.on .res-grid a{animation:fadeUp .5s cubic-bezier(.22,1,.36,1) backwards;animation-delay:calc(.1s + var(--i,0)*70ms)}
+.tstrip.intro .task{animation:fadeUp .45s cubic-bezier(.22,1,.36,1) backwards;animation-delay:calc(.05s + var(--i,0)*35ms)}
+.lnav.intro .chip{animation:fadeUp .4s cubic-bezier(.22,1,.36,1) backwards;animation-delay:calc(var(--i,0)*40ms)}
+#lbody{animation:fadeUp .45s cubic-bezier(.22,1,.36,1) backwards}
+.modal.on{animation:fIn .25s ease backwards}
+.modal.on .card{animation:popUp .4s cubic-bezier(.22,1,.36,1) backwards}
+@keyframes fIn{from{opacity:0}}
+@keyframes popUp{from{opacity:0;transform:translateY(24px) scale(.96)}}
+.hero::before{animation:drift 9s ease-in-out infinite alternate}
+.hero::after{animation:drift 12s ease-in-out infinite alternate-reverse}
+@keyframes drift{to{transform:translate(14px,18px)}}
+.chip{transition:all .22s cubic-bezier(.22,1,.36,1)}
+.chip:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.14)}
+.btn,nav button{transition:all .2s cubic-bezier(.22,1,.36,1)}
+.btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.16)}
+.btn:active:not(:disabled){transform:translateY(0) scale(.96)}
+nav button.on{transition:all .25s ease}
+textarea,input,select{transition:border-color .25s,box-shadow .25s,background-color .35s}
+.task{transition:background-color .2s ease,border-color .2s ease,transform .18s ease}
+.task:hover{transform:translateX(4px)}
+.dot{transition:background-color .3s,border-color .3s}
+.msg,.res,#out details,#out pre{animation:fadeUp .3s ease both}
+.res-grid a{transition:transform .22s ease,border-color .25s,box-shadow .25s ease}
+.res-grid a:hover{transform:translateY(-4px);box-shadow:0 8px 22px rgba(0,0,0,.18)}
+#aisettings-btn{transition:transform .3s ease,border-color .25s,box-shadow .25s}
+#aisettings-btn:hover{transform:rotate(40deg)}
+.prog i{transition:width .5s ease}
+summary{transition:color .2s}
+summary:hover{color:var(--acc2)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.lnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;justify-content:center}
+.chip{font:inherit;font-size:13px;border:1px solid transparent;background:var(--card);color:var(--text);padding:8px 16px;border-radius:999px;cursor:pointer;box-shadow:0 2px 10px rgba(20,20,70,.06)}
+.chip.on{background:var(--acc);color:#fff;border-color:transparent;box-shadow:0 6px 16px color-mix(in srgb,var(--acc) 35%,transparent)}
+.lbody p,.lbody li{line-height:1.65}.lbody code{background:var(--code);padding:1px 6px;border-radius:6px;font-size:13px}
+.lbody textarea{min-height:60px;margin-top:6px}
+.note{background:var(--code);border-left:3px solid var(--acc);padding:12px 16px;border-radius:10px;margin:12px 0;font-size:14px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
+.modal.on{display:flex}.modal .card{width:min(380px,92vw)}
+.modal input{display:block;width:100%;margin:8px 0;font:inherit;background:var(--code);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><b>SQL</b> Тренажёр</div>
+  <nav id="nav">
+    <button data-v="basics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Основы SQL</button>
+    <button data-v="practice" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Практика</button>
+    <button data-v="quiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Тесты</button>
+    <button data-v="sandbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v5.5L4.7 18a2 2 0 0 0 1.8 3h11a2 2 0 0 0 1.8-3L14 8.5V3"/></svg>Песочница</button>
+    <button data-v="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.8 4.7L18.5 10.5l-4.7 1.8L12 17l-1.8-4.7L5.5 10.5l4.7-1.8z"/></svg>ИИ-конструктор</button>
+    <button data-v="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Материалы</button>
+  </nav>
+  <span class="tag" id="acct" title="Режим доступа">Гость</span>
+  <button class="btn" id="authbtn">Войти</button>
+  <button class="btn" id="theme" title="Сменить тему"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</header>
+<main>
+<section class="view on" id="practice">
+  <div class="hero">
+    <div>
+      <div class="htag">ИНТЕРАКТИВНЫЙ ТРЕНАЖЁР</div>
+      <h1>Практика SQL</h1>
+      <p>Задачи трёх уровней по учебной базе магазина: от простого SELECT до JOIN и группировок. Черновики и прогресс сохраняются автоматически.</p>
+      <span class="htag2" id="herodone"></span>
+    </div>
+  </div>
+  <div class="card tcard">
+    <h3 id="listhead" style="cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">Задачи <span id="listarrow" style="font-weight:400">▾</span></h3>
+    <div id="listwrap"><div class="prog"><i id="bar"></i></div><div id="list" class="tstrip"></div></div>
+  </div>
+  <div class="pgrid">
+    <div class="pside">
+      <div class="card">
+        <div class="tmeta"><span class="tag" id="tl"></span><span id="tcount"></span></div>
+        <h2 id="tt"></h2><div id="td" style="color:var(--mute)"></div>
+        <div class="row" style="margin-bottom:0">
+          <button class="btn" id="tprev">← Предыдущая</button>
+          <button class="btn" id="tnext">Следующая →</button>
+        </div>
+      </div>
+      <div class="card">
+        <details open><summary><b>Схема БД</b></summary><div id="schema" style="margin-top:10px"></div></details>
+      </div>
+    </div>
+    <div class="card pwork">
+      <div class="sqlbox" style="margin-top:0">
+        <div class="sqlhead"><span>SQL-запрос</span><span class="kbdhint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> — выполнить</span></div>
+        <textarea id="sql" spellcheck="false" placeholder="SELECT ..."></textarea>
+      </div>
+      <div class="row">
+        <button class="btn p" id="run">Выполнить</button>
+        <button class="btn" id="hint">Подсказка</button>
+        <button class="btn" id="sol">Решение</button>
+      </div>
+      <div id="exp" class="expbox"></div>
+      <div id="out"></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="basics">
+  <div class="lnav" id="lnav"></div>
+  <div class="card lbody" id="lbody" style="max-width:820px;margin:0 auto"></div>
+</section>
+
+<section class="view" id="sandbox">
+  <div class="grid" id="sbgrid" style="grid-template-columns:290px 1fr">
+    <div class="card" id="sbside"><h3>Таблицы песочницы</h3><div id="sbschema"></div></div>
+    <div class="card">
+      <h2>Песочница</h2>
+      <div id="sbstate"></div>
+      <div id="sbbody">
+        <textarea id="sbq" spellcheck="false" placeholder="INSERT INTO categories (id, name) VALUES (5, 'Серверы')"></textarea>
+        <div class="row">
+          <button class="btn p" id="sbrun">Выполнить</button>
+          <button class="btn" id="sbreset">Сбросить базу</button>
+        </div>
+        <div style="color:var(--mute);font-size:13px">Можно выполнять любые запросы к своей копии базы. Один запрос за раз.</div>
+      </div>
+      <div id="sbout"></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="ai">
+  <div class="card" style="max-width:720px;margin:0 auto">
+    <h2>ИИ-конструктор заданий</h2>
+    <p style="color:var(--mute);margin-top:0">Опишите, что хотите потренировать — ИИ составит задачу по учебной базе и проверит, что эталонное решение работает.</p>
+    <textarea id="aiq" style="min-height:90px" placeholder="Например: хочу потренировать LEFT JOIN и группировку по категориям товаров"></textarea>
+    <div class="row">
+      <select id="ailv"><option>лёгкий</option><option selected>средний</option><option>сложный</option></select>
+      <button class="btn p" id="aigo">Сгенерировать задание</button>
+    </div>
+    <div id="aimsg"></div>
+  </div>
+</section>
+
+<section class="view" id="quiz">
+  <div class="card" style="max-width:820px;margin:0 auto">
+    <h2>Тест по SQL</h2>
+    <p style="color:var(--mute);margin-top:0">Опишите своими словами, по чём хотите пройти тест, — ИИ составит 5 вопросов с вариантами ответов: по теории SQL, по учебной базе магазина или по конкретной теме вроде JOIN или GROUP BY.</p>
+    <textarea id="qask" style="min-height:70px" placeholder="Например: хочу тест по джойнам и подзапросам"></textarea>
+    <div class="row">
+      <select id="qlv"><option>лёгкий</option><option selected>средний</option><option>сложный</option></select>
+      <button class="btn p" id="qgo">Сгенерировать тест</button>
+    </div>
+    <div id="qmsg"></div>
+    <div id="qbody"></div>
+  </div>
+</section>
+
+<section class="view" id="learn">
+  <h2>Открытые источники для изучения SQL</h2>
+  <p style="color:var(--mute);margin-top:0">Нажмите на карточку — откроется подробный обзор: что внутри, плюсы и минусы, кому подходит и как заниматься.</p>
+  <div class="res-grid" id="links"></div>
+</section>
+</main>
+
+<div id="authpanel" class="modal"><div class="card">
+  <h2>Аккаунт</h2>
+  <div id="authnote" style="color:var(--mute);font-size:13px"></div>
+  <input id="auser" placeholder="Логин (латиница, 3–20 символов)" autocomplete="username">
+  <input id="apass" type="password" placeholder="Пароль (от 6 символов)" autocomplete="current-password">
+  <div class="row"><button class="btn p" id="alogin">Войти</button><button class="btn" id="areg">Создать аккаунт</button><button class="btn" id="authclose">Отмена</button></div>
+  <div id="amsg"></div>
+</div></div>
+<div id="artpanel" class="modal"><div class="card" style="width:min(760px,94vw);max-height:86vh;overflow-y:auto">
+  <div id="artbody" class="lbody"></div>
+  <div class="row"><a class="btn p" id="artlink" href="#" target="_blank" rel="noopener">Перейти на сайт →</a><button class="btn" id="artclose">Закрыть</button></div>
+</div></div>
+<button id="aisettings-btn" title="Настройки ИИ"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></button>
+<div id="aipanel">
+  <h3 style="margin-bottom:6px">Настройки ИИ</h3>
+  <div class="row" style="margin-bottom:0">
+    <select id="aiprov" style="width:100%">
+      <option value="auto">Бесплатный онлайн-ИИ (без ключа)</option>
+      <option value="gemini">Google Gemini (бесплатный ключ)</option>
+      <option value="groq">Groq / Llama (бесплатный ключ)</option>
+      <option value="oai">OpenAI-совместимый API</option>
+    </select>
+  </div>
+  <div class="row" style="margin-bottom:0"><input id="aikey" type="password" placeholder="API-ключ (пусто = встроенный)" style="width:100%"></div>
+  <div class="row" id="oairow" style="display:none;margin-bottom:0">
+    <input id="aibase" placeholder="URL API" style="flex:1;min-width:0">
+    <input id="aimodel" placeholder="Модель" style="width:130px">
+  </div>
+  <div class="row" style="margin-bottom:0"><button class="btn p" id="aisave">Сохранить</button><button class="btn" id="aiclose">×</button></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mk=(c,r)=>r.map(x=>Object.fromEntries(c.map((k,i)=>[k,x[i]])));
+const DB={
+ categories:mk(['id','name'],[[1,'Ноутбуки'],[2,'Видеокарты'],[3,'Мониторы'],[4,'Периферия']]),
+ products:mk(['id','name','category_id','brand','price','stock'],[[1,'ASUS Vivobook 15',1,'ASUS',65000,12],[2,'Lenovo IdeaPad 3',1,'Lenovo',52000,8],[3,'MacBook Air M2',1,'Apple',120000,5],[4,'GeForce RTX 4060',2,'NVIDIA',38000,15],[5,'Radeon RX 7600',2,'AMD',31000,10],[6,'Dell U2723QE',3,'Dell',55000,6],[7,'LG 27GP850',3,'LG',32000,9],[8,'Logitech MX Master 3S',4,'Logitech',9500,30],[9,'Razer BlackWidow',4,'Razer',11500,0]]),
+ reviews:mk(['id','product_id','author','rating','review_date'],[[1,1,'Иван',5,'2024-02-01'],[2,1,'Мария',4,'2024-02-10'],[3,3,'Олег',5,'2024-02-18'],[4,3,'Анна',5,'2024-03-02'],[5,4,'Иван',4,'2024-03-09'],[6,4,'Пётр',3,'2024-03-15'],[7,6,'Мария',5,'2024-03-22'],[8,8,'Олег',4,'2024-04-01'],[9,8,'Анна',5,'2024-04-07'],[10,5,'Пётр',2,'2024-04-12']]),
+ orders:mk(['id','product_id','customer','qty','status','order_date'],[[1,1,'Альфа',2,'paid','2024-01-12'],[2,4,'Бета',1,'paid','2024-01-20'],[3,2,'Гамма',3,'cancelled','2024-02-02'],[4,8,'Дельта',5,'paid','2024-02-15'],[5,3,'Альфа',1,'new','2024-03-01'],[6,4,'Бета',2,'paid','2024-03-10'],[7,6,'Эпсилон',1,'paid','2024-03-18'],[8,1,'Гамма',1,'paid','2024-04-05']])
+};
+for(const t in DB){alasql('CREATE TABLE '+t);alasql.tables[t].data=DB[t].map(r=>({...r}));}
+$('#schema').innerHTML=Object.entries(DB).map(([t,r])=>`<div class="tbl"><b>${t}</b><div>${Object.keys(r[0]).join(', ')}</div></div>`).join('')+'<div class="msg info">status: paid / new / cancelled</div>';
+
+const tasks=[
+ ['Каталог цен','Выведите названия и цены всех товаров.','лёгкий','SELECT name, price FROM products','Выберите два столбца из products.'],
+ ['Дорогие товары','Выведите название и цену товаров дороже 50000, от самых дорогих к дешёвым.','лёгкий','SELECT name, price FROM products WHERE price > 50000 ORDER BY price DESC','WHERE фильтрует, ORDER BY ... DESC сортирует.'],
+ ['Нет в наличии','Выведите названия товаров, которых нет на складе (stock = 0).','лёгкий','SELECT name FROM products WHERE stock = 0','Сравните столбец stock с нулём.'],
+ ['Хорошие отзывы','Выведите автора и оценку отзывов с оценкой 4 и выше.','лёгкий','SELECT author, rating FROM reviews WHERE rating >= 4','Условие rating >= 4.'],
+ ['Уникальные бренды','Выведите список брендов без повторов, по алфавиту.','лёгкий','SELECT DISTINCT brand FROM products ORDER BY brand','DISTINCT убирает дубликаты.'],
+ ['Товары и категории','Выведите название товара и название его категории.','средний','SELECT p.name, c.name AS category FROM products p JOIN categories c ON c.id = p.category_id','Соедините таблицы по p.category_id = c.id.'],
+ ['Оплаченные заказы','Выведите покупателя и название товара для оплаченных заказов (status = \'paid\'), от старых к новым по дате заказа.','средний','SELECT o.customer, p.name FROM orders o JOIN products p ON p.id = o.product_id WHERE o.status = \'paid\' ORDER BY o.order_date','JOIN по o.product_id = p.id, затем WHERE и ORDER BY.'],
+ ['Заказы по статусам','Выведите каждый статус заказа и количество заказов с этим статусом.','средний','SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status','GROUP BY status и COUNT(*).'],
+ ['Отзывы с пятёрками','Выведите название товара и автора отзывов с оценкой 5, по названию товара.','средний','SELECT p.name, r.author FROM reviews r JOIN products p ON p.id = r.product_id WHERE r.rating = 5 ORDER BY p.name','JOIN reviews и products, затем WHERE и ORDER BY.'],
+ ['Отзывы по авторам','Выведите каждого автора отзывов и количество его отзывов.','средний','SELECT author, COUNT(*) AS cnt FROM reviews GROUP BY author','GROUP BY author и COUNT(*).'],
+ ['Средняя цена','Для каждой категории выведите название и среднюю цену товаров.','сложный','SELECT c.name, AVG(p.price) AS avg_price FROM categories c JOIN products p ON p.category_id = c.id GROUP BY c.name','JOIN + GROUP BY + AVG.'],
+ ['Продано штук','Для каждого товара с оплаченными заказами (status = \'paid\') выведите название и общее количество проданных штук.','сложный','SELECT p.name, SUM(o.qty) AS sold FROM products p JOIN orders o ON o.product_id = p.id WHERE o.status = \'paid\' GROUP BY p.name','Сначала JOIN и WHERE, затем GROUP BY и SUM.'],
+ ['Большие категории','Выведите названия категорий, в которых больше двух товаров.','сложный','SELECT c.name FROM categories c JOIN products p ON p.category_id = c.id GROUP BY c.name HAVING COUNT(*) > 2','Условие на агрегат пишется в HAVING.'],
+ ['Без заказов','Выведите названия товаров, которые ни разу не заказывали.','сложный','SELECT p.name FROM products p LEFT JOIN orders o ON o.product_id = p.id WHERE o.id IS NULL','LEFT JOIN и проверка IS NULL.'],
+ ['Рейтинг товаров','Выведите названия товаров со средней оценкой не ниже 4.5 и саму среднюю оценку.','сложный','SELECT p.name, AVG(r.rating) AS avg_rating FROM products p JOIN reviews r ON r.product_id = p.id GROUP BY p.name HAVING AVG(r.rating) >= 4.5','JOIN, GROUP BY и HAVING AVG(...).'],
+ ['Без отзывов','Выведите названия товаров, у которых нет ни одного отзыва.','сложный','SELECT p.name FROM products p LEFT JOIN reviews r ON r.product_id = p.id WHERE r.id IS NULL','LEFT JOIN и IS NULL.'],
+ ['Отзывы по категориям','Для каждой категории выведите название и число отзывов на её товары (категории без отзывов не нужны).','сложный','SELECT c.name, COUNT(*) AS reviews_cnt FROM categories c JOIN products p ON p.category_id = c.id JOIN reviews r ON r.product_id = p.id GROUP BY c.name','Цепочка JOIN: categories → products → reviews, затем GROUP BY.']
+].map(t=>({title:t[0],desc:t[1],level:t[2],sol:t[3],hint:t[4]}));
+
+let done=new Set(),cur=0;
+try{done=new Set(JSON.parse(localStorage.getItem('sqlt-done')||'[]'))}catch(e){}
+const saveDone=()=>{try{localStorage.setItem('sqlt-done',JSON.stringify([...done]))}catch(e){}};
+
+// Ключ localStorage для черновика запроса конкретной задачи: у каждой задачи и каждого аккаунта свой черновик.
+// В гостевом режиме черновики не сохраняются в localStorage — живут только в памяти до перезагрузки страницы
+const sessionDrafts={};
+const tkey=t=>'sqlt-t-'+(acctName||'guest')+':'+t.title.trim();
+// ИИ-задания сохраняются в localStorage и восстанавливаются после перезагрузки
+const saveAiTasks=()=>{try{localStorage.setItem('sqlt-ai-tasks',JSON.stringify(tasks.filter(t=>t.ai)))}catch(e){}};
+try{(JSON.parse(localStorage.getItem('sqlt-ai-tasks')||'[]')||[]).forEach(t=>{
+  if(t&&t.title&&t.sol&&!tasks.some(x=>x.title.trim()===String(t.title).trim()))
+    tasks.push({title:String(t.title),desc:t.desc||t.description||'',level:t.level||'средний',sol:t.sol,hint:t.hint||'Подсказки нет.',ai:true});
+})}catch(e){}
+// Задачи, удалённые пользователем (по названию), не показываем; вернуть стандартные можно кнопкой в пустом списке
+try{const del=JSON.parse(localStorage.getItem('sqlt-del')||'[]');if(del.length)for(let i=tasks.length-1;i>=0;i--)if(del.includes(tasks[i].title.trim()))tasks.splice(i,1)}catch(e){}
+
+function runSql(sql){
+  if(!/^\s*select\b/i.test(sql))throw new Error('Разрешены только запросы SELECT.');
+  return alasql(sql.replace(/;\s*$/,''));
+}
+function table(rows){
+  if(!rows.length)return '<div class="msg info">Пустой результат</div>';
+  const k=Object.keys(rows[0]);
+  return `<div class="res"><table><tr>${k.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${rows.slice(0,100).map(r=>`<tr>${k.map(c=>`<td>${esc(r[c])}</td>`).join('')}</tr>`).join('')}</table></div><div style="color:var(--mute);font-size:12px;margin-top:6px">Строк: ${rows.length}</div>`;
+}
+const norm=(rows,ord)=>{const a=rows.map(r=>Object.values(r).map(v=>typeof v==='number'?Math.round(v*100)/100:String(v)).join('¦'));return ord?a:a.sort()};
+
+function renderList(){
+  $('#list').innerHTML=tasks.map((t,i)=>`<div class="task ${i===cur?'on':''}" data-i="${i}" style="--i:${i}" title="${esc(t.title)}"><span class="tnum ${t.level==='лёгкий'?'lv1':t.level==='средний'?'lv2':'lv3'}">${i+1}</span><span class="dot ${done.has(t.title)?'ok':''}"></span><span class="n">${esc(t.title)}</span>${t.ai?'<span class="tag ai">ИИ</span>':''}<span class="tdel" data-del="${i}" title="Удалить задачу">×</span></div>`).join('')||'<div class="msg info" style="margin:0;flex:1">Все задачи удалены.</div><button class="btn" id="trestore">Вернуть стандартные задачи</button>';
+  $('#bar').style.width=(tasks.length?Math.round(100*tasks.filter(t=>done.has(t.title)).length/tasks.length):0)+'%';
+  const hd=$('#herodone');if(hd)hd.textContent=`Решено ${tasks.filter(t=>done.has(t.title)).length} из ${tasks.length} задач`;
+}
+function open(i){
+  if(!tasks.length){ // все задачи удалены — показываем пустое состояние
+    cur=0;$('#tt').textContent='Задач нет';$('#td').textContent='Вернуть стандартные задачи можно кнопкой в списке задач.';
+    $('#tl').textContent='';const tc0=$('#tcount');if(tc0)tc0.textContent='';
+    $('#tprev').disabled=true;$('#tnext').disabled=true;
+    $('#sql').value='';$('#out').innerHTML='';$('#exp').innerHTML='';renderList();return;
+  }
+  cur=Math.max(0,Math.min(i,tasks.length-1));const t=tasks[cur];
+  $('#tt').textContent=t.title;$('#td').textContent=t.desc;$('#tl').textContent=t.level;
+  $('#tl').className='tag '+(t.level==='лёгкий'?'lv1':t.level==='средний'?'lv2':'lv3');
+  const tc=$('#tcount');if(tc)tc.textContent='Задача '+(cur+1)+' из '+tasks.length;
+  $('#tprev').disabled=cur===0;$('#tnext').disabled=cur===tasks.length-1;
+  let saved='';
+  if(canEdit){try{saved=localStorage.getItem(tkey(t))||''}catch(e){}}
+  else saved=sessionDrafts[t.title]||'';
+  $('#sql').value=saved;$('#out').innerHTML='';renderList();
+  const ac=$('#list .task.on');if(ac)ac.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+  if(saved.trim())runCheck(); // восстанавливаем последний результат проверки этой задачи
+  else $('#out').innerHTML='<div class="msg info" style="margin-top:0">Введите запрос и нажмите «Выполнить» — ваш результат появится здесь.</div>';
+  try{$('#exp').innerHTML='<h3>Ожидаемый результат</h3>'+table(runSql(t.sol))+(/order\s+by/i.test(t.sol)?'<div style="color:var(--mute);font-size:12px">Порядок строк важен.</div>':'')}catch(e){$('#exp').innerHTML=''}
+}
+$('#list').onclick=e=>{
+  const del=e.target.closest('.tdel');
+  if(del){e.stopPropagation();delTask(+del.dataset.del);return}
+  if(e.target.closest('#trestore')){try{localStorage.removeItem('sqlt-del')}catch(_){}location.reload();return}
+  const d=e.target.closest('.task');if(d)open(+d.dataset.i);
+};
+// Удаление задачи (любой, включая стандартные): название уходит в sqlt-del, чтобы задача не вернулась после перезагрузки
+function delTask(i){
+  const t=tasks[i];if(!t)return;
+  if(!confirm('Удалить задачу «'+t.title.trim()+'»?'))return;
+  let del=[];try{del=JSON.parse(localStorage.getItem('sqlt-del')||'[]')}catch(e){}
+  del.push(t.title.trim());
+  try{localStorage.setItem('sqlt-del',JSON.stringify(del))}catch(e){}
+  tasks.splice(i,1);saveAiTasks();
+  open(i<cur?cur-1:cur);
+}
+// Сворачивание списка задач (состояние сохраняется между сессиями)
+let listCollapsed=false;
+try{listCollapsed=localStorage.getItem('sqlt-tasks-collapsed')==='1'}catch(e){}
+const renderListCollapse=()=>{$('#listwrap').style.display=listCollapsed?'none':'';$('#listarrow').textContent=listCollapsed?'▸':'▾'};
+$('#listhead').onclick=()=>{listCollapsed=!listCollapsed;try{localStorage.setItem('sqlt-tasks-collapsed',listCollapsed?'1':'0')}catch(e){}renderListCollapse()};
+$('#tprev').onclick=()=>{if(cur>0)open(cur-1)};
+$('#tnext').onclick=()=>{if(cur<tasks.length-1)open(cur+1)};
+function compare(mine,t){
+  const ref=runSql(t.sol),ord=/order\s+by/i.test(t.sol);
+  if(JSON.stringify(norm(mine,ord))===JSON.stringify(norm(ref,ord)))return{ok:true};
+  const mc=mine.length?Object.keys(mine[0]).length:0,rc=ref.length?Object.keys(ref[0]).length:0;
+  let why='Значения отличаются от ожидаемых. Проверьте условия'+(ord?' и порядок строк.':'.');
+  if(mine.length!==ref.length)why=`Число строк отличается: у вас ${mine.length}, ожидается ${ref.length}.`;
+  else if(mc!==rc)why=`Число столбцов отличается: у вас ${mc}, ожидается ${rc}.`;
+  return{ok:false,why};
+}
+function runCheck(){
+  const t=tasks[cur];if(!t)return;
+  try{
+    const mine=runSql($('#sql').value),c=compare(mine,t);
+    $('#out').innerHTML='<h3>Ваш результат</h3>'+table(mine)+`<div class="msg ${c.ok?'ok':'bad'}">${c.ok?'Верно! Ваш результат совпал с ожидаемым.':'Не совпадает с ожидаемым. '+esc(c.why)}</div>`;
+    if(c.ok){done.add(t.title);saveDone();renderList()}
+  }catch(e){$('#out').innerHTML=`<div class="msg bad">Ошибка: ${esc(e.message)}</div>`}
+}
+$('#run').onclick=runCheck;
+$('#hint').onclick=()=>{const t=tasks[cur];if(!t)return;$('#out').innerHTML=`<div class="msg info">${esc(t.hint)}</div>`};
+$('#sol').onclick=()=>{
+  const t=tasks[cur];if(!t)return;
+  $('#out').innerHTML=`<details open><summary>Эталонное решение</summary><pre>${esc(t.sol)}</pre></details><div class="row" style="margin-top:8px;margin-bottom:0"><button class="btn p" id="solfill">Вставить в редактор</button></div>`;
+  $('#solfill').onclick=()=>{$('#sql').value=t.sol;$('#sql').dispatchEvent(new Event('input'));$('#sql').focus()};
+};
+
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===b.dataset.v));
+});
+$('#theme').onclick=()=>{
+  const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+  r.dataset.theme=dark?'light':'dark';
+};
+
+const LINKS=[
+ {n:'SQL-EX',pin:true,u:'https://sql-ex.ru',s:'Вдохновение для этого проекта: большой сборник задач.',f:`
+  <p><b>Что это.</b> Легендарный русскоязычный задачник по SQL, существующий с начала 2000-х. Именно им вдохновлён наш тренажёр. Десятки задач на нескольких учебных схемах: компьютерная техника, корабли, авиарейсы, склад красок.</p>
+  <p><b>Как устроен.</b> Задачи разбиты по стадиям сложности. Решение проверяется на двух наборах данных — видимом и скрытом, поэтому «подогнать» ответ под пример не выйдет: запрос обязан быть правильным в общем случае. Есть рейтинг, уровни и сертификация.</p>
+  <p><b>Плюсы.</b> Лучшая «прокачка» до автоматизма; строгая проверка учит писать точно и читать условие до конца. <b>Минусы.</b> Формулировки требуют внимательности; новичку поначалу тяжело; часть функций доступна после регистрации.</p>
+  <p><b>Как заниматься.</b> Решать по две-три задачи в день; после сдачи обязательно разбирать чужие решения — они открываются после вашего правильного ответа.</p>
+  <p><b>Кому подходит.</b> Всем, кто освоил базу, — это главный «спортзал» по SQL на русском языке.</p>`},
+ {n:'SQLBolt',u:'https://sqlbolt.com',s:'Интерактивные уроки с нуля, на английском.',f:`
+  <p><b>Что это.</b> Бесплатный интерактивный курс SQL для новичков, работающий прямо в браузере: регистрация и установка не нужны.</p>
+  <p><b>Как устроен.</b> 19 коротких уроков: сначала немного теории, затем интерактивное окно, где вы пишете запрос к встроенной учебной базе и сразу видите результат. Ошибки сопровождаются понятными сообщениями.</p>
+  <p><b>Темы.</b> SELECT и фильтрация WHERE, операторы IN, LIKE, BETWEEN, сортировка ORDER BY и LIMIT, JOIN по нескольким таблицам, агрегаты с GROUP BY и HAVING, изменение данных (INSERT, UPDATE, DELETE), создание таблиц (CREATE, ALTER, DROP).</p>
+  <p><b>Плюсы.</b> Нулевой порог входа, мгновенная проверка, весь курс проходится за один-два вечера. <b>Минусы.</b> Только английский язык; мало задач «на подумать»; нет тем про индексы и проектирование баз; диалект близок к SQLite.</p>
+  <p><b>Как заниматься.</b> Идти по порядку; в каждом уроке сначала менять готовый пример и смотреть, что изменилось, затем решать задачу, не подглядывая в ответ. Пройденную тему полезно сразу повторить в нашем тренажёре.</p>
+  <p><b>Кому подходит.</b> Тем, кто никогда не писал SQL, — идеальная первая ступень.</p>`},
+ {n:'SQL Academy',u:'https://sql-academy.org',s:'Бесплатный русскоязычный курс и тренажёр.',f:`
+  <p><b>Что это.</b> Русскоязычная образовательная платформа по SQL: системный курс плюс тренажёр с автоматической проверкой на настоящей СУБД.</p>
+  <p><b>Как устроено.</b> Модули из коротких уроков: теория с примерами, затем задачи — ваш запрос выполняется на сервере (MySQL), а результат сверяется с эталоном. Есть сохранение прогресса, тесты и рейтинг.</p>
+  <p><b>Темы.</b> От базового SELECT и фильтров до агрегатов и GROUP BY, нескольких видов JOIN, подзапросов, оконных функций и изменения данных. Есть отдельные треки, например для аналитиков данных.</p>
+  <p><b>Цена.</b> Базовая часть курса бесплатна; продвинутые модули и часть задач открываются по подписке. Для сохранения прогресса нужна регистрация.</p>
+  <p><b>Плюсы.</b> Полностью на русском, системная программа, реальная СУБД вместо браузерной имитации, много практики. <b>Минусы.</b> Часть контента платная; привязка к одному диалекту (MySQL).</p>
+  <p><b>Кому подходит.</b> Тем, кто хочет пройти весь путь «с нуля до уверенного уровня» на русском языке и не любит учиться по английским источникам.</p>`},
+ {n:'W3Schools SQL',u:'https://www.w3schools.com/sql/',s:'Справочник по командам с примерами.',f:`
+  <p><b>Что это.</b> Онлайн-справочник по SQL с фирменной кнопкой «Try it Yourself»: почти каждый пример можно запустить и изменить прямо в браузере.</p>
+  <p><b>Что внутри.</b> Отдельные страницы по каждой команде: SELECT, WHERE, операторы сравнения и логики, JOIN, агрегатные и строковые функции, работа с датами, команды DDL (CREATE, ALTER, DROP). Варианты синтаксиса для разных СУБД, квизы для самопроверки.</p>
+  <p><b>Плюсы.</b> Самый быстрый способ вспомнить синтаксис — находится за минуту; примеры короткие и редактируемые. <b>Минусы.</b> Это не курс, а шпаргалка: объяснения краткие, методики обучения нет; платный «сертификат» особой ценности не имеет.</p>
+  <p><b>Как использовать.</b> Держать открытым рядом с тренажёром и подсматривать точный синтаксис команды, когда забыли порядок слов в GROUP BY или формат LIKE. Для самопроверки полезны встроенные квизы.</p>
+  <p><b>Кому подходит.</b> Всем: от новичка до практика — как настольный справочник.</p>`},
+ {n:'SQLZoo',u:'https://sqlzoo.net',s:'Классические упражнения с проверкой.',f:`
+  <p><b>Что это.</b> Один из старейших бесплатных тренажёров SQL: сотни задач с автопроверкой на нескольких «живых» наборах данных — страны мира, нобелевские лауреаты, фильмы, транспортные маршруты.</p>
+  <p><b>Как устроен.</b> Уроки идут ступенями от простого SELECT к JOIN, агрегатам и подзапросам; под каждым шагом — серия задач. Диалект можно переключать: MySQL, PostgreSQL, Oracle, SQL Server.</p>
+  <p><b>Плюсы.</b> Огромный объём практики, полностью бесплатно, разнообразные данные вместо одной скучной таблицы. <b>Минусы.</b> Старомодный интерфейс; проверка иногда требует точного совпадения формата ответа — порядка столбцов, имён колонок, округления.</p>
+  <p><b>Совет.</b> Если верный по смыслу ответ «не принимается», сверьте имена столбцов и их порядок с образцом в условии — чаще всего дело в этом.</p>
+  <p><b>Кому подходит.</b> Тем, кто уже прошёл первый курс и хочет набить руку на большом количестве задач разной сложности.</p>`},
+ {n:'Mode SQL Tutorial',u:'https://mode.com/sql-tutorial/',s:'Аналитический SQL: от основ до оконных функций.',f:`
+  <p><b>Что это.</b> Англоязычный курс от аналитической платформы Mode: SQL подаётся как рабочий инструмент аналитика данных, а не абстрактный язык.</p>
+  <p><b>Уровни.</b> Basic — SELECT, WHERE, агрегаты, JOIN. Intermediate — подзапросы, UNION, условная логика CASE. Advanced — оконные функции, работа с датами и строками, сводные таблицы. Отдельный раздел посвящён аналитическому мышлению: как из вопроса бизнеса получить запрос.</p>
+  <p><b>Практика.</b> Запросы выполняются в браузере на PostgreSQL с данными, похожими на реальные стартапные: компании, раунды инвестиций, показатели. Для запуска примеров может понадобиться бесплатная учётная запись Mode.</p>
+  <p><b>Плюсы.</b> Современная подача, упор на задачи из аналитики, диалект PostgreSQL — один из самых востребованных. <b>Минусы.</b> Только английский; часть интерактива зависит от аккаунта.</p>
+  <p><b>Кому подходит.</b> Тем, кто учит SQL ради аналитики данных, BI или отчётности.</p>`},
+ {n:'PostgreSQL Tutorial',u:'https://www.postgresqltutorial.com',s:'Подробные разборы возможностей PostgreSQL.',f:`
+  <p><b>Что это.</b> Большой структурированный учебный сайт, целиком посвящённый PostgreSQL — от установки до внутренних механизмов.</p>
+  <p><b>Что внутри.</b> Установка и инструменты (psql, pgAdmin), типы данных, все виды запросов, JOIN, подзапросы, CTE, оконные функции, транзакции, ограничения целостности, индексы, представления, триггеры, хранимые функции, импорт и экспорт данных, советы по производительности.</p>
+  <p><b>Формат.</b> Статьи с пошаговыми примерами и диаграммами; предполагается, что вы повторяете запросы в собственной установке PostgreSQL.</p>
+  <p><b>Плюсы.</b> Глубина и аккуратность изложения, охватывает даже администрирование. <b>Минусы.</b> Английский язык; нужно ставить PostgreSQL локально; интерактива почти нет.</p>
+  <p><b>Кому подходит.</b> Тем, кто выбрал PostgreSQL основной СУБД и хочет разобраться в ней глубоко и «по книге».</p>`},
+ {n:'Документация PostgreSQL',u:'https://postgrespro.ru/docs',s:'Официальная документация на русском.',f:`
+  <p><b>Что это.</b> Официальный перевод документации PostgreSQL на русский язык от компании Postgres Professional — первоисточник по этой СУБД.</p>
+  <p><b>Что внутри.</b> Полное описание синтаксиса каждой команды, все типы данных и встроенные функции, настройка сервера, репликация, оптимизация запросов через EXPLAIN, внутреннее устройство базы.</p>
+  <p><b>Формат.</b> Это справочник, а не курс: его не читают «от корки до корки», а открывают конкретную главу по мере надобности — например, точное поведение ON CONFLICT или параметры CREATE INDEX.</p>
+  <p><b>Плюсы.</b> Абсолютная точность и полнота, русский язык, поддержка актуальных версий. <b>Минусы.</b> Сухой академический стиль; новичку без контекста читается тяжело.</p>
+  <p><b>Кому подходит.</b> Разработчикам и администраторам, которые работают с PostgreSQL каждый день, — как «словарь» и «энциклопедия» рядом с курсами и задачниками.</p>`},
+ {n:'Microsoft Learn: SQL',u:'https://learn.microsoft.com/ru-ru/training/paths/get-started-querying-with-transact-sql/',s:'Официальный бесплатный курс Microsoft по T-SQL.',f:`
+  <p><b>Что это.</b> Официальный обучающий трек Microsoft по языку SQL в диалекте Transact-SQL (T-SQL) — тот самый диалект, который используется в SQL Server и Azure SQL.</p>
+  <p><b>Как устроен.</b> Пошаговые модули: сортировка и фильтрация, JOIN, подзапросы, агрегаты и группировка, встроенные функции, изменение данных. Модули состоят из коротких блоков теории, примеров и проверки знаний; за прохождение начисляются баллы опыта и трофеи в профиле Microsoft Learn.</p>
+  <p><b>Плюсы.</b> Первоисточник от производителя СУБД, полностью бесплатно, есть русский перевод интерфейса, материал аккуратно структурирован и регулярно обновляется. <b>Минусы.</b> Интерактивная песочница есть не во всех модулях — для части практики нужна бесплатная подписка Azure или локальный SQL Server; перевод местами машинный.</p>
+  <p><b>Как заниматься.</b> Проходить модули по порядку, а примеры параллельно повторять в нашем тренажёре или песочнице — синтаксис базовых запросов почти совпадает.</p>
+  <p><b>Кому подходит.</b> Тем, кто планирует работать с SQL Server, Azure или экосистемой Microsoft, и всем, кто хочет официальный трек от крупного вендора.</p>`},
+ {n:'SQL Murder Mystery',u:'https://mystery.knightlab.com/',s:'Детективная игра: расследуйте убийство SQL-запросами.',f:`
+  <p><b>Что это.</b> Бесплатная браузерная игра-детектив от Northwestern University Knight Lab: в городе SQL City произошло убийство, и вы — детектив, который расследует его запросами к базе полиции.</p>
+  <p><b>Как устроена.</b> Прямо в браузере работает настоящая SQLite-база: таблицы со свидетельствами, досье на людей, членством в фитнес-клубе, номерами машин, записями о доходах, телефонными переговорами. Начинается всё с одного отчёта о преступлении — дальше вы вытягиваете нить за нитью: свидетели → их показания → подозреваемые → улики, пока не найдёте убийцу (а потом и заказчика!).</p>
+  <p><b>Плюсы.</b> Детективный сюжет незаметно заставляет освоить SELECT, WHERE, LIKE и JOIN по нескольким таблицам; работает без регистрации; есть подсказки для застрявших. <b>Минусы.</b> Только английский язык; история одна — переигрывать не так интересно; уровень базовый и средний, без оконных функций.</p>
+  <p><b>Кому подходит.</b> Тем, кто освоил первые уроки и хочет закрепить JOIN на «живой» истории вместо сухих упражнений. Отличный вечерний квест после нашей вкладки «Практика».</p>`},
+ {n:'SQL Noir и другие SQL-игры',u:'https://www.sqlnoir.com/blog/games-to-learn-sql',s:'Обзор игр, которые учат SQL через расследования и квесты.',f:`
+  <p><b>Что это.</b> Подборка игр для изучения SQL от создателей SQL Noir — браузерного нуар-детектива, где запросы к базе раскрывают запутанные дела. Список охватывает несколько игр разных жанров: от текстовых расследований до полноценных приключений.</p>
+  <p><b>Что внутри.</b> SQL Noir — серия дел в атмосфере чёрно-белого нуара: вы пишете запросы, чтобы сопоставлять улики и находить виновных. Далее в подборке — SQL Murder Mystery, SQL Island (выживание на острове через запросы), Schemaverse и другие проекты с короткими обзорами: о чём игра, какой уровень нужен и какие навыки она прокачивает.</p>
+  <p><b>Плюсы.</b> Готовый маршрут «игрового» изучения SQL: можно выбрать игру по вкусу и уровню; игры бесплатны и работают в браузере; игровая мотивация отлично закрепляет SELECT, WHERE и JOIN. <b>Минусы.</b> Материалы на английском; игры не заменяют системный курс — это приятное дополнение к практике.</p>
+  <p><b>Кому подходит.</b> Всем, кто учится играючи: добавьте пару игр в закладки и возвращайтесь к ним между задачами нашего тренажёра.</p>`}
+];
+$('#links').innerHTML=LINKS.map((l,i)=>`<a href="${l.u}" data-i="${i}" style="--i:${i}" rel="noopener"><b>${l.n}</b>${l.pin?'<span class="tag ai">закреплено</span>':''}<span>${l.s}</span></a>`).join('');
+$('#links').onclick=e=>{
+  const a=e.target.closest('a[data-i]');if(!a)return;
+  e.preventDefault();const l=LINKS[+a.dataset.i];
+  $('#artbody').innerHTML=`<h2>${l.n}</h2>`+l.f;
+  $('#artlink').href=l.u;
+  $('#artpanel').classList.add('on');
+};
+$('#artclose').onclick=()=>$('#artpanel').classList.remove('on');
+$('#artpanel').onclick=e=>{if(e.target.id==='artpanel')$('#artpanel').classList.remove('on')};
+
+const LV={
+'лёгкий':'ЛЁГКИЙ: только одна таблица, без JOIN, без GROUP BY, без подзапросов. Допустимо: SELECT нескольких столбцов, одно простое условие WHERE, при желании ORDER BY или простой COUNT(*) по всей таблице.',
+'средний':'СРЕДНИЙ: максимум две таблицы. Допустимо ЛИБО один JOIN двух таблиц с WHERE и/или ORDER BY (без группировки), ЛИБО GROUP BY по одной таблице с одной агрегатной функцией. ЗАПРЕЩЕНО: сочетать JOIN с GROUP BY, HAVING, LEFT JOIN, подзапросы, три и более таблицы.',
+'сложный':'СЛОЖНЫЙ: можно несколько JOIN, LEFT JOIN, GROUP BY с HAVING, JOIN вместе с агрегатами, подзапросы.'};
+const ALIAS_RULE='Псевдонимы столбцов (AS) только латиницей в snake_case и НЕ зарезервированные слова SQL: нельзя total, count, sum, value, key, order, date; используй total_sum, cnt, order_cnt и т.п. Решение должно возвращать непустой результат.';
+let sample=null;
+
+// Настройки ИИ: сюда можно встроить свой ключ, свои настройки хранятся в браузере
+const BUILTIN_KEY=''; // например: const BUILTIN_KEY='ваш_ключ_Gemini';
+let AISET={prov:BUILTIN_KEY?'gemini':'auto',key:BUILTIN_KEY,base:'',model:''};
+try{Object.assign(AISET,JSON.parse(localStorage.getItem('sqlt-ai')||'{}'))}catch(e){}
+$('#aiprov').value=AISET.prov||'auto';$('#aikey').value=AISET.key||'';$('#aibase').value=AISET.base||'';$('#aimodel').value=AISET.model||'';
+const updProv=()=>{$('#oairow').style.display=$('#aiprov').value==='oai'?'flex':'none'};
+updProv();$('#aiprov').onchange=updProv;
+$('#aisettings-btn').onclick=()=>{$('#aipanel').classList.toggle('on')};
+$('#aiclose').onclick=()=>{$('#aipanel').classList.remove('on')};
+$('#aisave').onclick=()=>{
+  const pv=$('#aiprov').value;
+  AISET={prov:pv,key:$('#aikey').value.trim()||(pv==='gemini'?BUILTIN_KEY:''),base:$('#aibase').value.trim(),model:$('#aimodel').value.trim()};
+  try{localStorage.setItem('sqlt-ai',JSON.stringify(AISET))}catch(e){}
+  $('#aipanel').classList.remove('on');
+  $('#aimsg').innerHTML='<div class="msg ok">Настройки сохранены.</div>';
+};
+
+// Локальный генератор заданий по шаблонам тем (запасной вариант, работает офлайн)
+const TPL=[
+ {lv:'лёгкий',kw:['сортир','order','топ'],title:'Топ-3 самых дорогих товара',description:'Выведите название и цену трёх самых дорогих товаров, от дорогих к дешёвым.',solution:'SELECT name, price FROM products ORDER BY price DESC LIMIT 3',hint:'Используйте ORDER BY ... DESC и LIMIT.'},
+ {lv:'лёгкий',kw:['like','поиск','назван'],title:'Поиск по бренду',description:'Выведите название и бренд товаров, чей бренд начинается на букву L.',solution:"SELECT name, brand FROM products WHERE brand LIKE 'L%'",hint:"LIKE с шаблоном 'L%'."},
+ {lv:'лёгкий',kw:['between','диапазон','цен'],title:'Диапазон цен',description:'Выведите название и цену товаров с ценой от 30000 до 60000 включительно, по возрастанию цены.',solution:'SELECT name, price FROM products WHERE price BETWEEN 30000 AND 60000 ORDER BY price',hint:'BETWEEN a AND b.'},
+ {lv:'лёгкий',kw:['in','статус','заказ'],title:'Активные заказы',description:'Выведите id, клиента, количество и дату заказов со статусом paid или new.',solution:"SELECT id, customer, qty, order_date FROM orders WHERE status IN ('paid','new')",hint:'WHERE status IN (...).'},
+ {lv:'лёгкий',kw:['дат','месяц','март'],title:'Заказы за март',description:'Выведите id, клиента, количество и статус заказов, сделанных в марте 2024 года.',solution:"SELECT id, customer, qty, status FROM orders WHERE order_date LIKE '2024-03%'",hint:"Даты — строки, поэтому подойдёт LIKE '2024-03%'."},
+ {lv:'лёгкий',kw:['distinct','уникальн','бренд'],title:'Уникальные бренды',description:'Выведите список уникальных брендов товаров по алфавиту.',solution:'SELECT DISTINCT brand FROM products ORDER BY brand',hint:'DISTINCT убирает дубликаты.'},
+ {lv:'средний',kw:['join','соедин','джо'],title:'Товары с категориями',description:'Выведите название товара и название его категории.',solution:'SELECT p.name, c.name AS category FROM products p JOIN categories c ON c.id = p.category_id',hint:'Соедините таблицы по p.category_id = c.id.'},
+ {lv:'средний',kw:['оплач','paid'],title:'Оплаченные заказы',description:'Выведите покупателя и название товара для оплаченных заказов (status = \'paid\'), от старых к новым по дате заказа.',solution:"SELECT o.customer, p.name FROM orders o JOIN products p ON p.id = o.product_id WHERE o.status = 'paid' ORDER BY o.order_date",hint:'JOIN, затем WHERE и ORDER BY.'},
+ {lv:'средний',kw:['статус','status'],title:'Заказы по статусам',description:'Выведите каждый статус заказа и количество заказов с этим статусом.',solution:'SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status',hint:'GROUP BY status и COUNT(*).'},
+ {lv:'сложный',kw:['left'],title:'Все категории и их товары',description:'Выведите все категории и названия их товаров, отсортируйте по названию категории.',solution:'SELECT c.name, p.name AS product FROM categories c LEFT JOIN products p ON p.category_id = c.id ORDER BY c.name',hint:'LEFT JOIN сохраняет категории, даже если в них нет товаров.'},
+ {lv:'сложный',kw:['группир','group','количеств','count'],title:'Товаров в категории',description:'Для каждой категории выведите название и количество товаров в ней.',solution:'SELECT c.name, COUNT(p.id) AS cnt FROM categories c LEFT JOIN products p ON p.category_id = c.id GROUP BY c.name',hint:'LEFT JOIN + GROUP BY + COUNT.'},
+ {lv:'средний',kw:['средн','avg'],title:'Средняя цена брендов',description:'Для каждого бренда выведите среднюю цену его товаров.',solution:'SELECT brand, AVG(price) AS avg_price FROM products GROUP BY brand',hint:'GROUP BY brand + AVG(price).'},
+ {lv:'сложный',kw:['макс','max','дорог'],title:'Максимум в категории',description:'Для каждой категории выведите название и цену самого дорогого товара в ней.',solution:'SELECT c.name, MAX(p.price) AS max_price FROM categories c JOIN products p ON p.category_id = c.id GROUP BY c.name',hint:'GROUP BY + MAX(price).'},
+ {lv:'сложный',kw:['сумм','sum','выручк','продаж'],title:'Выручка по товарам',description:'Для каждого товара посчитайте выручку от оплаченных заказов (количество × цена). Выведите название товара и выручку.',solution:"SELECT p.name, SUM(o.qty * p.price) AS revenue FROM products p JOIN orders o ON o.product_id = p.id WHERE o.status = 'paid' GROUP BY p.name",hint:"JOIN, WHERE status = 'paid', затем SUM(o.qty * p.price)."},
+ {lv:'сложный',kw:['having'],title:'Категории с большим запасом',description:'Выведите названия категорий, где суммарный запас товаров на складе больше 20, и этот запас.',solution:'SELECT c.name, SUM(p.stock) AS total_stock FROM categories c JOIN products p ON p.category_id = c.id GROUP BY c.name HAVING SUM(p.stock) > 20',hint:'Условие на агрегат пишется в HAVING.'},
+ {lv:'сложный',kw:['подзапрос','выше средн'],title:'Дороже среднего',description:'Выведите название и цену товаров, цена которых выше средней цены по всем товарам, от дорогих к дешёвым.',solution:'SELECT name, price FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY price DESC',hint:'Подзапрос SELECT AVG(price) FROM products в WHERE.'},
+ {lv:'сложный',kw:['case','сегмент'],title:'Ценовые сегменты',description:'Разделите товары на сегменты: до 20000 — «бюджет», до 60000 — «средний», остальное — «премиум». Выведите название, цену и сегмент по убыванию цены.',solution:"SELECT name, price, CASE WHEN price < 20000 THEN 'бюджет' WHEN price < 60000 THEN 'средний' ELSE 'премиум' END AS segment FROM products ORDER BY price DESC",hint:'CASE WHEN ... THEN ... ELSE ... END.'}
+];
+function localTask(q,lv){
+  const s=q.toLowerCase().replace(/ё/g,'е');
+  let pool=TPL.filter(t=>t.lv===lv);if(!pool.length)pool=TPL;
+  // Нечёткое совпадение (для ключей от 4 букв): слово с опечаткой считается совпавшим с ключевым словом
+  const words=s.split(/[^a-zа-я0-9]+/).filter(w=>w.length>2);
+  const match=k=>s.includes(k)||(k.length>3&&words.some(w=>{const t=w.length>k.length+2?w.slice(0,k.length):w;return Math.abs(t.length-k.length)<=2&&lev(t,k)<=(k.length>5?2:1)}));
+  const hit=pool.find(t=>t.kw.some(match))||TPL.find(t=>t.kw.some(match));
+  // Общие слова по теме сайта: запрос по теме, но без конкретной темы задания — выдаём случайное задание уровня
+  const GEN=['sql','скю','баз','данн','таблиц','запрос','задан','трен','учеб','изуч','вучен','курс','урок','select','селект','столбц','колонк'];
+  const t=hit||(GEN.some(match)?pool[Math.floor(Math.random()*pool.length)]:null);
+  if(!t)return null;
+  let title=t.title,n=2;while(tasks.some(x=>x.title.trim()===title))title=`${t.title} №${n++}`;
+  return{title,description:t.description,solution:t.solution,hint:t.hint};
+}
+
+// Вызов ИИ: Claude > ваш API-ключ (Gemini/Groq/OpenAI-совм.) > бесплатный Pollinations.ai
+function parseAI(txt){
+  const mj=String(txt||'').match(/\{[\s\S]*\}/);
+  if(!mj)throw new Error('ИИ вернул ответ не в формате JSON');
+  return JSON.parse(mj[0]);
+}
+async function callLLM(prompt,timeoutMs=45000){
+  if(sample)return await sample.json(prompt,{cache:false});
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),timeoutMs);
+  try{return await callLLMInner(prompt,ctl.signal)}finally{clearTimeout(tm)}
+}
+async function callLLMInner(prompt,sig){
+  const pv=AISET.prov,key=AISET.key;
+  if(key&&pv==='gemini'){
+    const gem=async m=>{
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'Content-Type':'application/json'},signal:sig,body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json'}})});
+      const d=await r.json();
+      if(!r.ok)throw new Error('Gemini: '+((d.error&&d.error.message)||r.status));
+      return d;
+    };
+    let d,lastErr;
+    const models=[AISET.model||'gemini-3.6-flash','gemini-flash-latest','gemini-3.8-flash'];
+    for(const m of models){try{d=await gem(m);break}catch(e){lastErr=e;if(!/404|NOT_FOUND|no longer available|503|UNAVAILABLE|high demand/i.test(e.message))throw e}}
+    if(!d)throw lastErr;
+    return parseAI(d.candidates&&d.candidates[0]&&d.candidates[0].content.parts[0].text);
+  }
+  if(key&&(pv==='groq'||pv==='oai')){
+    const url=pv==='groq'?'https://api.groq.com/openai/v1/chat/completions':(AISET.base||'https://api.openai.com/v1').replace(/\/+$/,'')+'/chat/completions';
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},signal:sig,body:JSON.stringify({model:AISET.model||(pv==='groq'?'llama-3.3-70b-versatile':'gpt-4o-mini'),messages:[{role:'user',content:prompt}],response_format:{type:'json_object'},temperature:0.7})});
+    const d=await r.json();
+    if(!r.ok)throw new Error('API: '+((d.error&&d.error.message)||r.status));
+    return parseAI(d.choices&&d.choices[0]&&d.choices[0].message.content);
+  }
+  const r=await fetch('https://text.pollinations.ai/',{method:'POST',headers:{'Content-Type':'application/json'},signal:sig,body:JSON.stringify({messages:[{role:'user',content:prompt}],model:'openai',jsonMode:true})});
+  if(!r.ok)throw new Error('сервис ИИ недоступен ('+r.status+')');
+  return parseAI(await r.text());
+}
+
+// Локально отсеиваем только явный мусор; тематичность (с учётом опечаток) определяет ИИ, а без него — нечёткий поиск по шаблонам
+const isJunk=q=>q.length<3||!/[a-zа-яё]/i.test(q)||/^(.)\1{3,}$/.test(q.replace(/\s+/g,''));
+// Расстояние Левенштейна — распознаёт слова с опечатками
+const lev=(a,b)=>{const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]!==b[j-1]));p=t}}return d[b.length]};
+$('#aigo').onclick=async()=>{
+  const q=$('#aiq').value.trim(),m=$('#aimsg'),lv=$('#ailv').value;
+  if(!q){m.innerHTML='<div class="msg bad">Опишите, какое задание вы хотите.</div>';return}
+  if(isJunk(q)){m.innerHTML='<div class="msg bad">Похоже на случайный набор символов. Напишите, что хотите потренировать — можно с опечатками, главное, чтобы это касалось SQL или данных учебного магазина.</div>';return}
+  $('#aigo').disabled=true;
+  const schema=Object.entries(DB).map(([t,r])=>`${t}(${Object.keys(r[0]).join(', ')})`).join('\n');
+  const data=Object.entries(DB).map(([t,r])=>`${t}: ${JSON.stringify(r)}`).join('\n');
+  const prompt=`Ты составляешь задания для SQL-тренажёра. Таблицы:\n${schema}\nstatus в orders: paid, new, cancelled. Даты - строки формата YYYY-MM-DD.\nДанные таблиц:\n${data}\nЗапрос ученика: "${q}"\nОпечатки и грамматические ошибки игнорируй: если по смыслу запрос про SQL, базы данных или эти таблицы - составь задание. Если запрос совсем не по теме сайта (бессмыслица, спам, посторонняя тема) - верни только JSON {"error":"короткое объяснение, почему запрос не по теме"}.\nСложность: ${lv}. Строго соблюдай уровень.\n${LV[lv]} ${ALIAS_RULE}\nТаблицы - магазин компьютерной техники. Составь ОДНО осмысленное задание на русском строго по этим таблицам: условие должно быть конкретным и однозначно проверяемым по результату запроса. Решение - один запрос SELECT в диалекте AlaSQL (без оконных функций, без CTE, без ILIKE), который на этих данных возвращает НЕПУСТОЙ результат - проверь это по данным выше. Если порядок строк не важен, не используй ORDER BY.\nВерни только JSON: {"title":"короткое название","description":"условие задачи","solution":"SQL","hint":"подсказка без готового ответа"}`;
+  let j=null,local=false,err='',refused='';
+  for(let att=1;att<=3&&!j&&!refused;att++){
+    m.innerHTML=`<div class="msg info">ИИ придумывает задание… (попытка ${att}/3)</div>`;
+    try{
+      const cand=await callLLM(err?prompt+`\nПредыдущий твой ответ не прошёл проверку: ${err}. Исправься и верни корректный JSON.`:prompt);
+      if(cand&&cand.error){refused=String(cand.error);break}
+      if(!cand||!cand.solution||!cand.title)throw new Error('неполный JSON: нужны поля title, description, solution, hint');
+      cand.solution=String(cand.solution).replace(/```(?:sql)?/gi,'').trim();
+      if(!runSql(cand.solution).length)throw new Error('запрос solution вернул пустой результат');
+      j=cand;
+    }catch(e){err=e.message||String(e)}
+  }
+  if(refused){m.innerHTML=`<div class="msg bad">Запрос не по теме сайта: ${esc(refused)} Опишите, что потренировать в SQL — можно своими словами и с опечатками.</div>`;$('#aigo').disabled=false;return}
+  if(!j){j=localTask(q,lv);local=true}
+  if(!j){m.innerHTML='<div class="msg bad">Запрос не по теме сайта (SQL и учебная база магазина), а ИИ сейчас недоступен. Попробуйте переформулировать или проверьте настройки ИИ (кнопка настроек в правом нижнем углу).</div>';$('#aigo').disabled=false;return}
+  try{
+    let title=String(j.title).trim(),n=2;const t0=title;
+    while(tasks.some(x=>x.title.trim()===title))title=`${t0} №${n++}`;
+    tasks.push({title:title+' ',desc:j.description,level:lv,sol:j.solution,hint:j.hint||'Подсказки нет.',ai:true});
+    saveAiTasks();
+    open(tasks.length-1);
+    document.querySelector('[data-v=practice]').click();
+    m.innerHTML=local?`<div class="msg info">ИИ не ответил (${esc(err)}), задание составлено локальным генератором. Проверьте интернет или настройки ИИ (кнопка настроек в правом нижнем углу).</div>`:'';
+  }catch(e){m.innerHTML=`<div class="msg bad">Не удалось создать задание: ${esc(e.message||'попробуйте ещё раз')}</div>`}
+  $('#aigo').disabled=false;
+};
+
+// ---------- Тесты по SQL: вопросы генерирует ИИ, офлайн-запасной вариант — встроенный банк ----------
+const QBANK=[
+ {q:'Какая команда выбирает данные из таблицы?',options:['SELECT','GET','FETCH','SHOW'],answer:0,explain:'Данные читаются командой SELECT: SELECT столбцы FROM таблица.'},
+ {q:'Что делает предложение WHERE?',options:['Сортирует результат','Фильтрует строки по условию','Объединяет таблицы','Группирует строки'],answer:1,explain:'WHERE оставляет только строки, удовлетворяющие условию.'},
+ {q:'Как вывести товары от самых дорогих к дешёвым?',options:['ORDER BY price ASC','SORT price DESC','ORDER BY price DESC','GROUP BY price DESC'],answer:2,explain:'Сортировка по убыванию: ORDER BY price DESC.'},
+ {q:'Какая функция считает количество строк?',options:['SUM(*)','COUNT(*)','TOTAL(*)','ROWS(*)'],answer:1,explain:'COUNT(*) возвращает число строк в результате или группе.'},
+ {q:'Что возвращает LEFT JOIN?',options:['Только совпавшие строки обеих таблиц','Все строки правой таблицы','Все строки левой таблицы и совпадения из правой','Декартово произведение таблиц'],answer:2,explain:'LEFT JOIN сохраняет все строки левой таблицы; если пары нет — подставляет NULL.'},
+ {q:'Чем HAVING отличается от WHERE?',options:['Ничем, это синонимы','HAVING фильтрует группы после агрегации','HAVING работает только с датами','WHERE фильтрует группы'],answer:1,explain:'WHERE фильтрует строки до группировки, HAVING — группы после GROUP BY.'},
+ {q:'Что вернёт SELECT DISTINCT brand FROM products?',options:['Все строки products','Список брендов без повторов','Количество брендов','Только первый бренд'],answer:1,explain:'DISTINCT убирает дубликаты значений из результата.'},
+ {q:'Что делает LIMIT 3?',options:['Выбирает третью строку','Ограничивает результат тремя строками','Показывает каждую третью строку','Удаляет три строки'],answer:1,explain:'LIMIT ограничивает максимальное число строк результата.'},
+ {q:'Как связаны таблицы products и categories?',options:['Никак не связаны','categories.product_id → products.id','products.category_id → categories.id','Через таблицу reviews'],answer:2,explain:'У товара хранится внешний ключ category_id — номер его категории.'},
+ {q:'Какая функция считает среднее значение?',options:['MEAN','AVG','MIDDLE','MEDIAN'],answer:1,explain:'AVG(column) возвращает среднее арифметическое.'},
+ {q:'Что делает GROUP BY?',options:['Сортирует строки','Удаляет дубликаты','Делит строки на группы для подсчёта агрегатов','Соединяет таблицы'],answer:2,explain:'GROUP BY объединяет строки в группы, а агрегатные функции считаются для каждой группы.'},
+ {q:'Как найти товары без отзывов?',options:['INNER JOIN + WHERE rating = 0','LEFT JOIN reviews + WHERE r.id IS NULL','WHERE rating IS NULL в products','COUNT(*) = 0 в WHERE'],answer:1,explain:'LEFT JOIN сохраняет все товары; у товаров без отзывов поля reviews равны NULL.'}
+];
+let quiz=null;
+// Офлайн-запасной вариант: вопросы из банка, по возможности подобранные под тему запроса
+const pickBank=q=>{
+  const words=String(q||'').toLowerCase().split(/[^a-zа-яё0-9]+/).filter(w=>w.length>2);
+  const hit=QBANK.filter(x=>words.some(w=>(x.q+' '+x.options.join(' ')).toLowerCase().includes(w))).sort(()=>Math.random()-.5);
+  const rest=QBANK.filter(x=>!hit.includes(x)).sort(()=>Math.random()-.5);
+  return [...hit,...rest].slice(0,5);
+};
+// Терпимая нормализация ответа ИИ: 3–6 вариантов, answer может быть числом или буквой («A»/«Б»)
+function normQuiz(j){
+  if(!j||!Array.isArray(j.questions))return null;
+  const qs=j.questions.map(x=>{
+    if(!x||typeof x.q!=='string'||!Array.isArray(x.options))return null;
+    const options=x.options.map(String).filter(s=>s.trim()).slice(0,6);
+    if(options.length<3)return null;
+    let a=x.answer;
+    if(typeof a==='string'){const t=a.trim().toUpperCase();a=/^\d+$/.test(t)?+t:'ABCDEF'.indexOf(t.charAt(0))}
+    a=+a;if(!Number.isInteger(a)||a<0||a>=options.length)return null;
+    return {q:String(x.q).trim(),options,answer:a,explain:String(x.explain||'—')};
+  }).filter(Boolean);
+  return qs.length?{questions:qs.slice(0,5)}:null;
+}
+function renderQuiz(){
+  const b=$('#qbody');
+  if(!quiz){b.innerHTML='';return}
+  b.innerHTML=quiz.questions.map((x,i)=>`<div class="qitem" data-i="${i}" style="--i:${i}">
+    <div class="qq"><span class="qn">${i+1}</span><span>${esc(x.q)}</span></div>
+    ${x.options.map((o,k)=>`<label class="qopt"><input type="radio" name="q${i}" value="${k}"><span>${esc(o)}</span></label>`).join('')}
+    <div class="qexp" style="display:none"></div>
+  `).join('')+`<div class="row"><button class="btn p" id="qcheck">Проверить ответы</button><button class="btn" id="qagain">Пройти заново</button><button class="btn" id="qclear">Убрать тест</button></div><div id="qscore"></div>`;
+}
+function saveQuiz(){try{quiz?localStorage.setItem('sqlt-quiz',JSON.stringify(quiz)):localStorage.removeItem('sqlt-quiz')}catch(e){}}
+$('#qgo').onclick=async()=>{
+  const q=$('#qask').value.trim(),lv=$('#qlv').value,m=$('#qmsg');
+  if(!q){m.innerHTML='<div class="msg bad">Опишите, по какой теме хотите тест.</div>';return}
+  if(isJunk(q)){m.innerHTML='<div class="msg bad">Похоже на случайный набор символов. Напишите тему теста — можно своими словами и с опечатками, главное, чтобы это касалось SQL или учебной базы.</div>';return}
+  $('#qgo').disabled=true;$('#qbody').innerHTML='';
+  const schema=Object.entries(DB).map(([t,r])=>`${t}(${Object.keys(r[0]).join(', ')})`).join('\n');
+  const prompt=`Ты составляешь тест для SQL-тренажёра. Таблицы учебной базы:\n${schema}\nstatus в orders: paid, new, cancelled.\nТема от ученика: "${q}"\nОпечатки и грамматические ошибки игнорируй: если по смыслу запрос про SQL, базы данных или эти таблицы — составь тест по этой теме. Если запрос совсем не по теме сайта (бессмыслица, спам, посторонняя тема) — верни только JSON {"error":"короткое объяснение"}.\nСложность: ${lv}.\nСоставь 5 разных вопросов на русском с 4 правдоподобными вариантами ответов и ровно одним правильным. Вопросы короткие и однозначные, без подвоха. Правильные ответы распределяй по разным позициям. Верни только JSON {"questions":[{"q":"вопрос","options":["вариант","вариант","вариант","вариант"],"answer":0,"explain":"одно предложение объяснения"}]}, где answer — индекс правильного варианта от 0 до 3.`;
+  let j=null,err='',refused='';
+  for(let att=1;att<=3&&!j&&!refused;att++){
+    m.innerHTML=`<div class="msg info">ИИ составляет вопросы… (попытка ${att}/3)</div>`;
+    try{
+      const cand=await callLLM(err?prompt+`\nПредыдущий твой ответ не прошёл проверку: ${err}. Исправься и верни корректный JSON.`:prompt,30000);
+      if(cand&&cand.error){refused=String(cand.error);break}
+      j=normQuiz(cand);
+      if(!j)err='нужен JSON {"questions":[...]}: у каждого вопроса 4 варианта ответа и answer — индекс правильного (0–3)';
+    }catch(e){err=e.name==='AbortError'?'ИИ не ответил вовремя (таймаут 30 с)':e.message||String(e);if(/\((4\d\d)\)/.test(err)&&!/\(429\)/.test(err))break} // при постоянных ошибках (4xx) повторять бессмысленно — выходим сразу
+  }
+  if(refused){m.innerHTML=`<div class="msg bad">Запрос не по теме сайта: ${esc(refused)} Опишите, что проверить в SQL — можно своими словами и с опечатками.</div>`}
+  else if(j){quiz=j;saveQuiz();renderQuiz();m.innerHTML=''}
+  else{quiz={questions:pickBank(q)};saveQuiz();renderQuiz();m.innerHTML=`<div class="msg info">ИИ недоступен (${esc(err)}), тест составлен из встроенного банка вопросов. Проверьте настройки ИИ (кнопка настроек в правом нижнем углу).</div>`}
+  $('#qgo').disabled=false;
+};
+$('#qbody').onclick=e=>{
+  const b=e.target.closest('button');
+  if(!b||!quiz)return;
+  if(b.id==='qagain'){renderQuiz();return}
+  if(b.id==='qclear'){quiz=null;saveQuiz();renderQuiz();$('#qmsg').innerHTML='';return}
+  if(b.id!=='qcheck')return;
+  let score=0;const total=quiz.questions.length;
+  quiz.questions.forEach((x,i)=>{
+    const item=document.querySelector(`.qitem[data-i="${i}"]`);
+    const sel=item.querySelector('input:checked');
+    item.querySelectorAll('.qopt').forEach((o,k)=>{
+      o.classList.remove('ok','bad');
+      if(k===x.answer)o.classList.add('ok');
+      else if(sel&&+sel.value===k)o.classList.add('bad');
+    });
+    const exp=item.querySelector('.qexp');exp.style.display='block';exp.textContent='Правильный ответ: '+x.options[x.answer]+'. '+x.explain;
+    if(sel&&+sel.value===x.answer)score++;
+  });
+  const good=score>=Math.ceil(total*0.6);
+  $('#qscore').innerHTML=`<div class="qverdict ${score===total?'ok':good?'mid':'bad'}"><div class="qbig">${score} / ${total}</div><div>${score===total?'Идеально! Все ответы верные.':good?'Хороший результат!':'Стоит повторить материал — загляните в «Основы SQL».'}</div></div>`;
+  $('#qscore').scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+const LESSONS=[
+{t:'Таблицы',h:`<p><b>База данных</b> — это набор связанных <b>таблиц</b>. Таблица похожа на лист Excel: <b>столбцы</b> задают, какие данные хранятся (название, цена), а каждая <b>строка</b> — одна запись (один товар).</p>
+<p>В нашей учебной базе три таблицы: <code>categories</code> (категории), <code>products</code> (товары) и <code>orders</code> (заказы). Их схема всегда видна на вкладке «Практика».</p>
+<p><b>SQL</b> — язык запросов: вы описываете, какие данные нужны, а база сама находит их. Попробуйте первый запрос — он показывает все данные таблицы <code>products</code>.</p>`,ex:['SELECT * FROM products']},
+{t:'SELECT',h:`<p><code>SELECT</code> выбирает столбцы, <code>FROM</code> указывает таблицу. Звёздочка <code>*</code> значит «все столбцы». Нужные столбцы перечисляют через запятую.</p>
+<p>Через <code>AS</code> столбцу можно дать другое имя (псевдоним) — удобно в результатах и вычислениях.</p>
+<div class="note">Запросы можно менять прямо в окне примеров — экспериментируйте!</div>`,ex:['SELECT name, price FROM products','SELECT name AS product_name, price * 2 AS double_price FROM products']},
+{t:'WHERE',h:`<p><code>WHERE</code> оставляет только строки, которые подходят под условие. Сравнения: <code>=</code>, <code>&lt;&gt;</code> (не равно), <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>.</p>
+<p>Условия объединяют через <code>AND</code> (оба верны) и <code>OR</code> (хотя бы одно). <code>IN</code> проверяет список значений, <code>LIKE</code> ищет по шаблону: <code>%</code> — любые символы.</p>
+<p>Текст в запросах пишется в одинарных кавычках.</p>`,ex:['SELECT name, price FROM products WHERE price < 40000 AND stock > 0',"SELECT name, brand FROM products WHERE brand IN ('ASUS', 'Dell')","SELECT name FROM products WHERE name LIKE 'Lenovo%'"]},
+{t:'ORDER BY и LIMIT',h:`<p><code>ORDER BY</code> сортирует результат: по умолчанию по возрастанию (<code>ASC</code>), для убывания добавьте <code>DESC</code>. Можно сортировать по нескольким столбцам через запятую.</p>
+<p><code>LIMIT</code> ограничивает число строк. Вместе они отвечают на вопросы вроде «три самых дорогих товара».</p>
+<div class="note">Порядок написания всегда такой: SELECT → FROM → WHERE → ORDER BY → LIMIT.</div>`,ex:['SELECT name, price FROM products ORDER BY price DESC LIMIT 3','SELECT name, brand, price FROM products ORDER BY brand ASC, price DESC']},
+{t:'Агрегаты',h:`<p>Агрегатные функции сворачивают много строк в одно значение: <code>COUNT</code> — количество, <code>SUM</code> — сумма, <code>AVG</code> — среднее, <code>MIN</code> и <code>MAX</code> — наименьшее и наибольшее.</p>
+<p><code>COUNT(*)</code> считает все строки. Функции можно комбинировать с <code>WHERE</code>: сначала отбираются строки, потом считается итог.</p>`,ex:['SELECT COUNT(*) AS cnt, MIN(price) AS min_price, MAX(price) AS max_price, AVG(price) AS avg_price FROM products',"SELECT SUM(qty) AS paid_qty FROM orders WHERE status = 'paid'"]},
+{t:'GROUP BY и HAVING',h:`<p><code>GROUP BY</code> делит строки на группы и считает агрегаты для каждой группы отдельно: например, сколько заказов в каждом статусе.</p>
+<p><code>WHERE</code> фильтрует строки <i>до</i> группировки, а <code>HAVING</code> — группы <i>после</i> неё (по результату агрегата).</p>
+<div class="note">Правило: в SELECT можно писать либо столбцы из GROUP BY, либо агрегатные функции.</div>`,ex:['SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status','SELECT customer, SUM(qty) AS qty_sum FROM orders GROUP BY customer HAVING SUM(qty) > 2']},
+{t:'Связи таблиц',h:`<p>Чтобы не дублировать данные, информацию делят на таблицы и связывают их. Название категории хранится один раз в <code>categories</code>, а у каждого товара в <code>products</code> лежит только номер категории.</p>
+<ul><li><b>Первичный ключ (PRIMARY KEY)</b> — уникальный номер строки, обычно <code>id</code>.</li>
+<li><b>Внешний ключ (FOREIGN KEY)</b> — столбец, который ссылается на первичный ключ другой таблицы. Здесь <code>products.category_id</code> → <code>categories.id</code>, а <code>orders.product_id</code> и <code>reviews.product_id</code> → <code>products.id</code>.</li></ul>
+<p><b>Виды связей:</b> «один ко многим» (в одной категории много товаров — самая частая), «один к одному» и «многие ко многим» (например, студенты и курсы; для неё создают промежуточную таблицу).</p>
+<p>Сравните два запроса: номер категории в товарах и сами категории.</p>`,ex:['SELECT id, name, category_id FROM products','SELECT * FROM categories']},
+{t:'JOIN',h:`<p><code>JOIN</code> соединяет строки двух таблиц по условию связи: <code>ON c.id = p.category_id</code>. Таблицам удобно давать короткие псевдонимы (<code>p</code>, <code>c</code>), а столбцы писать как <code>p.name</code>.</p>
+<p><b>INNER JOIN</b> (просто <code>JOIN</code>) оставляет только пары, нашедшие друг друга. <b>LEFT JOIN</b> сохраняет все строки левой таблицы, а если пары нет, подставляет <code>NULL</code>. Так можно найти товары без заказов: <code>WHERE o.id IS NULL</code>.</p>
+<p>Теперь вы знаете достаточно, чтобы решать задачи на вкладке «Практика»!</p>`,ex:['SELECT p.name, c.name AS category FROM products p JOIN categories c ON c.id = p.category_id','SELECT p.name, o.id AS order_id FROM products p LEFT JOIN orders o ON o.product_id = p.id']}
+];
+let li=0;
+function showLesson(i){
+  li=i;const L=LESSONS[i];
+  $('#lnav').innerHTML=LESSONS.map((x,k)=>`<button class="chip ${k===i?'on':''}" data-k="${k}" style="--i:${k}">${k+1}. ${esc(x.t)}</button>`).join('');
+  const lb=$('#lbody');lb.style.animation='none';void lb.offsetWidth;lb.style.animation=''; // перезапуск анимации при смене урока
+  lb.innerHTML=`<h2>${i+1}. ${esc(L.t)}</h2>${L.h}`+L.ex.map((q,k)=>`<textarea class="exq" data-k="${k}" rows="2" spellcheck="false">${esc(q)}</textarea><div class="row"><button class="btn p" data-ex="${k}">Запустить</button></div><div id="exo${k}"></div>`).join('')+`<div class="row" style="justify-content:space-between;margin-top:20px"><button class="btn" id="lprev" ${i?'':'disabled'}>Назад</button><button class="btn p" id="lnext">${i<LESSONS.length-1?'Далее':'К практике'}</button></div>`;
+  window.scrollTo({top:0});
+}
+$('#lnav').onclick=e=>{const b=e.target.closest('.chip');if(b)showLesson(+b.dataset.k)};
+$('#lbody').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.ex!==undefined){
+    const k=b.dataset.ex,o=$('#exo'+k);
+    try{o.innerHTML=table(runSql(document.querySelector(`.exq[data-k="${k}"]`).value))}
+    catch(err){o.innerHTML=`<div class="msg bad">Ошибка: ${esc(err.message)}</div>`}
+  }else if(b.id==='lprev')showLesson(li-1);
+  else if(b.id==='lnext'){if(li<LESSONS.length-1)showLesson(li+1);else document.querySelector('[data-v=practice]').click()}
+};
+// ---------- Аккаунты (локально, в браузере) и песочница ----------
+let sb=null,sbLog=[],canEdit=false,acctName='';
+function initSb(log){
+  sb=new alasql.Database('sbx'+Date.now());
+  for(const t in DB){sb.exec('CREATE TABLE '+t);sb.tables[t].data=DB[t].map(r=>({...r}));}
+  for(const q of log){try{sb.exec(q)}catch(e){}}
+}
+function renderSb(){
+  $('#acct').textContent=canEdit?acctName:'Гость';
+  const isAdmin=canEdit&&acctName==='admin';
+  $('#aisettings-btn').style.display=isAdmin?'block':'none';
+  if(!isAdmin)$('#aipanel').classList.remove('on');
+  $('#authbtn').textContent=canEdit?'Выйти':'Войти';
+  // Песочница скрыта из меню для гостей и появляется только после входа
+  document.querySelector('[data-v=sandbox]').style.display=canEdit?'':'none';
+  if(!canEdit&&$('#sandbox').classList.contains('on'))document.querySelector('[data-v=practice]').click();
+  $('#sbstate').innerHTML=canEdit
+    ?`<div class="msg ok">Вы вошли в аккаунт: можно выполнять любые запросы к базе. Изменения сохраняются ${srvOn?'на сервере — они доступны с любого компьютера':'в вашей личной копии (в этом браузере)'}.</div>`
+    :'<div class="msg info">Песочница доступна только авторизованным пользователям. Войдите в аккаунт или создайте новый — и сможете изменять свою копию базы любыми запросами.</div><div class="row" style="margin-bottom:0"><button class="btn p" id="sblogin">Войти / Создать аккаунт</button></div>';
+  const sbl=$('#sblogin');if(sbl)sbl.onclick=()=>$('#authpanel').classList.add('on');
+  $('#sbbody').style.display=canEdit?'':'none';
+  $('#sbside').style.display=canEdit?'':'none';
+  $('#sbgrid').style.gridTemplateColumns=canEdit?'290px 1fr':'1fr';
+  $('#sbreset').disabled=!canEdit;
+  $('#sbschema').innerHTML=Object.keys(sb.tables).map(t=>{
+    const T=sb.tables[t],cols=(T.columns&&T.columns.length)?T.columns.map(c=>c.columnid):Object.keys(T.data[0]||{});
+    return `<div class="tbl"><b>${esc(t)}</b> <span class="tag">${T.data.length} стр.</span><div>${esc(cols.join(', '))}</div></div>`}).join('');
+}
+function saveSb(){
+  if(!canEdit)return;
+  if(srvOn&&sessHash){api('/api/sandbox',{u:acctName,h:sessHash,log:sbLog.slice(-300)}).catch(()=>{$('#sbout').insertAdjacentHTML('beforeend','<div class="msg bad">Не удалось сохранить изменения на сервере.</div>')});return}
+  try{localStorage.setItem('sqlt-sb-'+acctName,JSON.stringify(sbLog.slice(-300)))}catch(e){$('#sbout').insertAdjacentHTML('beforeend','<div class="msg bad">Не удалось сохранить изменения в браузере.</div>')}
+}
+$('#sbrun').onclick=()=>{
+  const q=$('#sbq').value.replace(/;\s*$/,''),o=$('#sbout');
+  try{
+    if(!q.trim())throw new Error('Введите запрос.');
+    if(!canEdit)throw new Error('Песочница доступна только авторизованным пользователям. Войдите в аккаунт.');
+    const isSel=/^\s*select\b/i.test(q);
+    if(q.length>2000)throw new Error('Слишком длинный запрос.');
+    const r=sb.exec(q);
+    if(isSel){o.innerHTML=table(r)}
+    else{sbLog.push(q);o.innerHTML='<div class="msg ok">Запрос выполнен.</div>';renderSb();saveSb()}
+  }catch(e){o.innerHTML=`<div class="msg bad">Ошибка: ${esc(e.message)}</div>`}
+};
+$('#sbreset').onclick=()=>{
+  if(!canEdit)return;
+  sbLog=[];initSb([]);renderSb();saveSb();$('#sbout').innerHTML='<div class="msg info">База сброшена к исходному состоянию.</div>';
+};
+const getUsers=()=>{try{return JSON.parse(localStorage.getItem('sqlt-users')||'{}')}catch(e){return{}}};
+// При работе через сервер аккаунты общие (users.json на сервере) — вход с любого компьютера
+const onHttp=location.protocol.startsWith('http');
+let sessHash='',srvOn=false;
+async function api(path,body){
+  const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:undefined);
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||'Ошибка сервера ('+r.status+')');
+  return d;
+}
+const AUTHTXT={srv:'Аккаунты хранятся на сервере: войти в свой аккаунт можно с любого компьютера сети. Это учебная защита, а не настоящая безопасность.',loc:'Сервер с аккаунтами не обнаружен (статический хостинг или файл): аккаунты хранятся только в этом браузере.'};
+$('#authnote').textContent=AUTHTXT.loc;
+// Проверяем, есть ли за этим адресом наш сервер с API (статический хостинг ответит 404/405)
+const srvProbe=(async()=>{if(!onHttp)return;try{await api('/api/ping');srvOn=true;$('#authnote').textContent=AUTHTXT.srv}catch(e){srvOn=false}})();
+async function hashPw(pw,salt){
+  if(!(window.crypto&&crypto.subtle))throw new Error('Для аккаунтов нужен защищённый контекст: откройте сайт через localhost (server.ps1) или https.');
+  const enc=new TextEncoder(),k=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);
+  const b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:100000,hash:'SHA-256'},k,256);
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+const authMsg=(t,c)=>{$('#amsg').innerHTML=`<div class="msg ${c}">${esc(t)}</div>`};
+async function loadSession(){
+  let raw=null;try{raw=localStorage.getItem('sqlt-session')}catch(e){}
+  let u='',h='';
+  if(raw){try{const o=JSON.parse(raw);if(o&&typeof o==='object'&&o.u){u=o.u;h=o.h||''}else u=String(o)}catch(e){u=raw}}
+  await srvProbe;
+  if(u&&h&&srvOn){
+    try{
+      const d=await api('/api/sandbox?u='+encodeURIComponent(u)+'&h='+encodeURIComponent(h));
+      canEdit=true;acctName=u;sessHash=h;
+      sbLog=[].concat(d.log||[]).filter(x=>typeof x==='string');
+      initSb(sbLog);renderSb();open(cur);return;
+    }catch(e){try{localStorage.removeItem('sqlt-session')}catch(_){}}
+  }
+  if(u&&getUsers()[u]){
+    canEdit=true;acctName=u;sessHash='';
+    try{sbLog=JSON.parse(localStorage.getItem('sqlt-sb-'+u)||'[]').filter(x=>typeof x==='string')}catch(e){sbLog=[]}
+  }else{canEdit=false;acctName='';sessHash='';sbLog=[]}
+  initSb(sbLog);renderSb();open(cur);
+}
+async function doAuth(reg){
+  const u=$('#auser').value.trim().toLowerCase(),p=$('#apass').value;
+  if(!/^[a-z0-9_.-]{3,20}$/.test(u))return authMsg('Логин: 3–20 символов, латиница, цифры, _ . -','bad');
+  if(p.length<6)return authMsg('Пароль не короче 6 символов.','bad');
+  try{
+    await srvProbe;
+    if(srvOn){
+      const d=await api('/api/auth',{op:reg?'reg':'login',u,p});
+      localStorage.setItem('sqlt-session',JSON.stringify({u,h:d.h}));
+      $('#apass').value='';$('#amsg').innerHTML='';$('#authpanel').classList.remove('on');loadSession();return;
+    }
+    const us=getUsers();
+    if(reg){
+      if(us[u])return authMsg('Такой логин уже занят.','bad');
+      const salt=[...crypto.getRandomValues(new Uint32Array(4))].join('-');
+      us[u]={salt,hash:await hashPw(p,salt)};localStorage.setItem('sqlt-users',JSON.stringify(us));
+    }else if(!us[u]||us[u].hash!==await hashPw(p,us[u].salt))return authMsg('Неверный логин или пароль.','bad');
+    localStorage.setItem('sqlt-session',u);
+    $('#apass').value='';$('#amsg').innerHTML='';$('#authpanel').classList.remove('on');loadSession();
+  }catch(e){authMsg(e.message,'bad')}
+}
+$('#authbtn').onclick=()=>{
+  if(canEdit){try{localStorage.removeItem('sqlt-session')}catch(e){}loadSession()}
+  else $('#authpanel').classList.add('on');
+};
+$('#authclose').onclick=()=>$('#authpanel').classList.remove('on');
+$('#alogin').onclick=()=>doAuth(false);
+$('#areg').onclick=()=>doAuth(true);
+$('#apass').onkeydown=e=>{if(e.key==='Enter')doAuth(false)};
+// Черновики полей ввода: текст сохраняется при наборе и восстанавливается после перехода между вкладками и перезагрузки.
+// У практики (#sql) черновик отдельный для каждой задачи — сохраняется под ключом задачи (см. tkey)
+const drafts={};
+try{for(const id of ['sbq','aiq','qask']){const v=localStorage.getItem('sqlt-draft-'+id);if(v)drafts[id]=v}}catch(e){}
+loadSession();
+showLesson(0);
+open(0);
+renderListCollapse();
+// Входные анимации ленты задач и кнопок уроков — только при первой загрузке страницы
+$('#list').classList.add('intro');setTimeout(()=>$('#list').classList.remove('intro'),1600);
+$('#lnav').classList.add('intro');setTimeout(()=>$('#lnav').classList.remove('intro'),1200);
+// Чистим черновики задач старого формата (без логина в ключе), оставшиеся с прошлых версий
+try{for(const k of Object.keys(localStorage))if(/^sqlt-t-[^:]*$/.test(k))localStorage.removeItem(k)}catch(e){}
+// Восстановление незавершённого теста после перезагрузки страницы
+try{const s=normQuiz(JSON.parse(localStorage.getItem('sqlt-quiz')||'null'));if(s){quiz=s;renderQuiz()}}catch(e){}
+for(const id of ['sbq','aiq','qask']){
+  const el=document.getElementById(id);
+  if(drafts[id])el.value=drafts[id];
+  el.addEventListener('input',()=>{try{localStorage.setItem('sqlt-draft-'+id,el.value)}catch(e){}});
+}
+$('#sql').addEventListener('input',()=>{if(canEdit){try{localStorage.setItem(tkey(tasks[cur]),$('#sql').value)}catch(e){}}else{sessionDrafts[tasks[cur].title]=$('#sql').value}});
+$('#sql').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();runCheck()}});
+$('#sbq').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();$('#sbrun').click()}});
+</script>
+</body>
+</html>
