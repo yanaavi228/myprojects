@@ -1,6 +1,4 @@
-﻿# Настройка хостинга на этом компьютере. Запустить ОДИН РАЗ от имени администратора:
-# правый клик по файлу -> "Выполнить с PowerShell" (от администратора)
-# или: powershell -ExecutionPolicy Bypass -File setup-hosting.ps1 (в консоли администратора)
+
 
 $ErrorActionPreference = 'Stop'
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
