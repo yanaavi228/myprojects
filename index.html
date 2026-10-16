@@ -404,9 +404,9 @@ try{(JSON.parse(localStorage.getItem('sqlt-ai-tasks')||'[]')||[]).forEach(t=>{
   if(t&&t.title&&t.sol&&!tasks.some(x=>x.title.trim()===String(t.title).trim()))
     tasks.push({title:String(t.title),desc:t.desc||t.description||'',level:t.level||'средний',sol:t.sol,hint:t.hint||'Подсказки нет.',ai:true});
 })}catch(e){}
-// Задачи, удалённые пользователем (по названию), не показываем; вернуть стандартные можно кнопкой в пустом списке
-try{const del=JSON.parse(localStorage.getItem('sqlt-del')||'[]');if(del.length)for(let i=tasks.length-1;i>=0;i--)if(del.includes(tasks[i].title.trim()))tasks.splice(i,1)}catch(e){}
-
+// Стандартные задачи удалить нельзя: чистим устаревший список скрытых задач, чтобы они вернулись
+try{localStorage.removeItem('sqlt-del')}catch(e){}
+  
 function runSql(sql){
   if(!/^\s*select\b/i.test(sql))throw new Error('Разрешены только запросы SELECT.');
   return alasql(sql.replace(/;\s*$/,''));
@@ -419,7 +419,7 @@ function table(rows){
 const norm=(rows,ord)=>{const a=rows.map(r=>Object.values(r).map(v=>typeof v==='number'?Math.round(v*100)/100:String(v)).join('¦'));return ord?a:a.sort()};
 
 function renderList(){
-  $('#list').innerHTML=tasks.map((t,i)=>`<div class="task ${i===cur?'on':''}" data-i="${i}" style="--i:${i}" title="${esc(t.title)}"><span class="tnum ${t.level==='лёгкий'?'lv1':t.level==='средний'?'lv2':'lv3'}">${i+1}</span><span class="dot ${done.has(t.title)?'ok':''}"></span><span class="n">${esc(t.title)}</span>${t.ai?'<span class="tag ai">ИИ</span>':''}<span class="tdel" data-del="${i}" title="Удалить задачу">×</span></div>`).join('')||'<div class="msg info" style="margin:0;flex:1">Все задачи удалены.</div><button class="btn" id="trestore">Вернуть стандартные задачи</button>';
+  $('#list').innerHTML=tasks.map((t,i)=>`<div class="task ${i===cur?'on':''}" data-i="${i}" style="--i:${i}" title="${esc(t.title)}"><span class="tnum ${t.level==='лёгкий'?'lv1':t.level==='средний'?'lv2':'lv3'}">${i+1}</span><span class="dot ${done.has(t.title)?'ok':''}"></span><span class="n">${esc(t.title)}</span>${t.ai?'<span class="tag ai">ИИ</span>':''}${t.ai?`<span class="tdel" data-del="${i}" title="Удалить задачу">×</span>`:''}</div>`).join('')||'<div class="msg info" style="margin:0;flex:1">Все задачи удалены.</div><button class="btn" id="trestore">Вернуть стандартные задачи</button>';
   $('#bar').style.width=(tasks.length?Math.round(100*tasks.filter(t=>done.has(t.title)).length/tasks.length):0)+'%';
   const hd=$('#herodone');if(hd)hd.textContent=`Решено ${tasks.filter(t=>done.has(t.title)).length} из ${tasks.length} задач`;
 }
@@ -451,12 +451,10 @@ $('#list').onclick=e=>{
   const d=e.target.closest('.task');if(d)open(+d.dataset.i);
 };
 // Удаление задачи (любой, включая стандартные): название уходит в sqlt-del, чтобы задача не вернулась после перезагрузки
+// Удалять можно только задачи, созданные ИИ (t.ai). Стандартные задачи удалить нельзя
 function delTask(i){
-  const t=tasks[i];if(!t)return;
+  const t=tasks[i];if(!t||!t.ai)return;
   if(!confirm('Удалить задачу «'+t.title.trim()+'»?'))return;
-  let del=[];try{del=JSON.parse(localStorage.getItem('sqlt-del')||'[]')}catch(e){}
-  del.push(t.title.trim());
-  try{localStorage.setItem('sqlt-del',JSON.stringify(del))}catch(e){}
   tasks.splice(i,1);saveAiTasks();
   open(i<cur?cur-1:cur);
 }
