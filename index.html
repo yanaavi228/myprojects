@@ -215,7 +215,7 @@ summary:hover{color:var(--acc2)}
   <nav id="nav">
     <button data-v="basics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Основы SQL</button>
     <button data-v="practice" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Практика</button>
-    <button data-v="quiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Тесты(БЕТА)</button>
+    <button data-v="quiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Тесты</button>
     <button data-v="sandbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v5.5L4.7 18a2 2 0 0 0 1.8 3h11a2 2 0 0 0 1.8-3L14 8.5V3"/></svg>Песочница</button>
     <button data-v="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.8 4.7L18.5 10.5l-4.7 1.8L12 17l-1.8-4.7L5.5 10.5l4.7-1.8z"/></svg>ИИ-конструктор</button>
     <button data-v="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Материалы</button>
@@ -308,7 +308,7 @@ summary:hover{color:var(--acc2)}
 <section class="view" id="quiz">
   <div class="card" style="max-width:820px;margin:0 auto">
     <h2>Тест по SQL</h2>
-    <p style="color:var(--mute);margin-top:0">Опишите своими словами, по чём хотите пройти тест, — ИИ составит тест с вариантами ответов (количество вопросов выберите кнопками ниже): по теории SQL.</p>
+    <p style="color:var(--mute);margin-top:0">Опишите своими словами, по чём хотите пройти тест, — ИИ составит тест с вариантами ответов (количество вопросов выберите кнопками ниже): по теории SQL, по учебной базе магазина или по конкретной теме вроде JOIN или GROUP BY.</p>
     <textarea id="qask" style="min-height:70px" placeholder="Например: хочу тест по джойнам и подзапросам"></textarea>
     <div class="row" id="qcnt" style="align-items:center"><span style="color:var(--mute)">Вопросов:</span><button class="chip on" data-n="5">5</button><button class="chip" data-n="10">10</button><button class="chip" data-n="15">15</button></div>
     <div class="row">
@@ -407,7 +407,7 @@ try{(JSON.parse(localStorage.getItem('sqlt-ai-tasks')||'[]')||[]).forEach(t=>{
 })}catch(e){}
 // Стандартные задачи удалить нельзя: чистим устаревший список скрытых задач, чтобы они вернулись
 try{localStorage.removeItem('sqlt-del')}catch(e){}
-  
+
 function runSql(sql){
   if(!/^\s*select\b/i.test(sql))throw new Error('Разрешены только запросы SELECT.');
   return alasql(sql.replace(/;\s*$/,''));
@@ -451,7 +451,6 @@ $('#list').onclick=e=>{
   if(e.target.closest('#trestore')){try{localStorage.removeItem('sqlt-del')}catch(_){}location.reload();return}
   const d=e.target.closest('.task');if(d)open(+d.dataset.i);
 };
-// Удаление задачи (любой, включая стандартные): название уходит в sqlt-del, чтобы задача не вернулась после перезагрузки
 // Удалять можно только задачи, созданные ИИ (t.ai). Стандартные задачи удалить нельзя
 function delTask(i){
   const t=tasks[i];if(!t||!t.ai)return;
@@ -731,7 +730,7 @@ const QBANK=[
  {q:'Как найти товары без отзывов?',options:['INNER JOIN + WHERE rating = 0','LEFT JOIN reviews + WHERE r.id IS NULL','WHERE rating IS NULL в products','COUNT(*) = 0 в WHERE'],answer:1,explain:'LEFT JOIN сохраняет все товары; у товаров без отзывов поля reviews равны NULL.'}
 ];
 let quiz=null;
-  // Количество вопросов выбирается кнопками (по умолчанию 5)
+// Количество вопросов выбирается кнопками (по умолчанию 5)
 let qN=5;
 $('#qcnt').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;qN=+b.dataset.n;$('#qcnt').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b))};
 // Офлайн-запасной вариант: вопросы из банка, по возможности подобранные под тему запроса
@@ -742,7 +741,7 @@ const pickBank=(q,n)=>{
   return [...hit,...rest].slice(0,n);
 };
 // Терпимая нормализация ответа ИИ: 3–6 вариантов, answer может быть числом или буквой («A»/«Б»)
-function normQuiz(j, max=30){
+function normQuiz(j,max=30){
   if(!j||!Array.isArray(j.questions))return null;
   const qs=j.questions.map(x=>{
     if(!x||typeof x.q!=='string'||!Array.isArray(x.options))return null;
@@ -762,7 +761,7 @@ function renderQuiz(){
     <div class="qq"><span class="qn">${i+1}</span><span>${esc(x.q)}</span></div>
     ${x.options.map((o,k)=>`<label class="qopt"><input type="radio" name="q${i}" value="${k}"><span>${esc(o)}</span></label>`).join('')}
     <div class="qexp" style="display:none"></div>
-  `).join('')+`<div class="row"><button class="btn p" id="qcheck">Проверить ответы</button><button class="btn" id="qagain">Пройти заново</button><button class="btn" id="qclear">Убрать тест</button></div><div id="qscore"></div>`;
+  </div>`).join('')+`<div class="row"><button class="btn p" id="qcheck">Проверить ответы</button><button class="btn" id="qagain">Пройти заново</button><button class="btn" id="qclear">Убрать тест</button></div><div id="qscore"></div>`;
 }
 function saveQuiz(){try{quiz?localStorage.setItem('sqlt-quiz',JSON.stringify(quiz)):localStorage.removeItem('sqlt-quiz')}catch(e){}}
 $('#qgo').onclick=async()=>{
@@ -776,7 +775,7 @@ $('#qgo').onclick=async()=>{
   for(let att=1;att<=3&&!j&&!refused;att++){
     m.innerHTML=`<div class="msg info">ИИ составляет вопросы… (попытка ${att}/3)</div>`;
     try{
-      const cand=await callLLM(err?prompt+`\nПредыдущий твой ответ не прошёл проверку: ${err}. Исправься и верни корректный JSON.`:prompt, tmo);
+      const cand=await callLLM(err?prompt+`\nПредыдущий твой ответ не прошёл проверку: ${err}. Исправься и верни корректный JSON.`:prompt,tmo);
       if(cand&&cand.error){refused=String(cand.error);break}
       j=normQuiz(cand,n);
       if(!j)err='нужен JSON {"questions":[...]}: у каждого вопроса 4 варианта ответа и answer — индекс правильного (0–3)';
@@ -784,7 +783,7 @@ $('#qgo').onclick=async()=>{
   }
   if(refused){m.innerHTML=`<div class="msg bad">Запрос не по теме сайта: ${esc(refused)} Опишите, что проверить в SQL — можно своими словами и с опечатками.</div>`}
   else if(j){quiz=j;saveQuiz();renderQuiz();m.innerHTML=''}
-  else{quiz={questions:pickBank(q,n)};saveQuiz();renderQuiz();m.innerHTML=`<div class="msg info">ИИ недоступен (${esc(err)}), тест составлен из встроенного банка вопросов. Проверьте настройки ИИ (кнопка настроек в правом нижнем углу).</div>`}
+  else{quiz={questions:pickBank(q,n)};saveQuiz();renderQuiz();m.innerHTML=`<div class="msg info">ИИ недоступен (${esc(err)}), тест составлен из встроенного банка вопросов${quiz.questions.length<n?` (в нём только ${quiz.questions.length} вопросов)`:''}. Проверьте настройки ИИ (кнопка настроек в правом нижнем углу).</div>`}
   $('#qgo').disabled=false;
 };
 $('#qbody').onclick=e=>{
