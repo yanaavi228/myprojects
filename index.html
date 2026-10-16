@@ -308,8 +308,9 @@ summary:hover{color:var(--acc2)}
 <section class="view" id="quiz">
   <div class="card" style="max-width:820px;margin:0 auto">
     <h2>Тест по SQL</h2>
-    <p style="color:var(--mute);margin-top:0">Опишите своими словами, по чём хотите пройти тест, — ИИ составит 5 вопросов с вариантами ответов: по теории SQL, по учебной базе магазина или по конкретной теме вроде JOIN или GROUP BY.</p>
+    <p style="color:var(--mute);margin-top:0">Опишите своими словами, по чём хотите пройти тест, — ИИ составит тест с вариантами ответов (количество вопросов выберите кнопками ниже): по теории SQL.</p>
     <textarea id="qask" style="min-height:70px" placeholder="Например: хочу тест по джойнам и подзапросам"></textarea>
+    <div class="row" id="qcnt" style="align-items:center"><span style="color:var(--mute)">Вопросов:</span><button class="chip on" data-n="5">5</button><button class="chip" data-n="10">10</button><button class="chip" data-n="15">15</button></div>
     <div class="row">
       <select id="qlv"><option>лёгкий</option><option selected>средний</option><option>сложный</option></select>
       <button class="btn p" id="qgo">Сгенерировать тест</button>
@@ -730,15 +731,18 @@ const QBANK=[
  {q:'Как найти товары без отзывов?',options:['INNER JOIN + WHERE rating = 0','LEFT JOIN reviews + WHERE r.id IS NULL','WHERE rating IS NULL в products','COUNT(*) = 0 в WHERE'],answer:1,explain:'LEFT JOIN сохраняет все товары; у товаров без отзывов поля reviews равны NULL.'}
 ];
 let quiz=null;
+  // Количество вопросов выбирается кнопками (по умолчанию 5)
+let qN=5;
+$('#qcnt').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;qN=+b.dataset.n;$('#qcnt').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b))};
 // Офлайн-запасной вариант: вопросы из банка, по возможности подобранные под тему запроса
-const pickBank=q=>{
+const pickBank=(q,n)=>{
   const words=String(q||'').toLowerCase().split(/[^a-zа-яё0-9]+/).filter(w=>w.length>2);
   const hit=QBANK.filter(x=>words.some(w=>(x.q+' '+x.options.join(' ')).toLowerCase().includes(w))).sort(()=>Math.random()-.5);
   const rest=QBANK.filter(x=>!hit.includes(x)).sort(()=>Math.random()-.5);
-  return [...hit,...rest].slice(0,5);
+  return [...hit,...rest].slice(0,n);
 };
 // Терпимая нормализация ответа ИИ: 3–6 вариантов, answer может быть числом или буквой («A»/«Б»)
-function normQuiz(j){
+function normQuiz(j, max=30){
   if(!j||!Array.isArray(j.questions))return null;
   const qs=j.questions.map(x=>{
     if(!x||typeof x.q!=='string'||!Array.isArray(x.options))return null;
@@ -749,7 +753,7 @@ function normQuiz(j){
     a=+a;if(!Number.isInteger(a)||a<0||a>=options.length)return null;
     return {q:String(x.q).trim(),options,answer:a,explain:String(x.explain||'—')};
   }).filter(Boolean);
-  return qs.length?{questions:qs.slice(0,5)}:null;
+  return qs.length?{questions:qs.slice(0,max)}:null;
 }
 function renderQuiz(){
   const b=$('#qbody');
@@ -762,25 +766,25 @@ function renderQuiz(){
 }
 function saveQuiz(){try{quiz?localStorage.setItem('sqlt-quiz',JSON.stringify(quiz)):localStorage.removeItem('sqlt-quiz')}catch(e){}}
 $('#qgo').onclick=async()=>{
-  const q=$('#qask').value.trim(),lv=$('#qlv').value,m=$('#qmsg');
+  const q=$('#qask').value.trim(),lv=$('#qlv').value,m=$('#qmsg'),n=qN,tmo=20000+n*4000;
   if(!q){m.innerHTML='<div class="msg bad">Опишите, по какой теме хотите тест.</div>';return}
   if(isJunk(q)){m.innerHTML='<div class="msg bad">Похоже на случайный набор символов. Напишите тему теста — можно своими словами и с опечатками, главное, чтобы это касалось SQL или учебной базы.</div>';return}
   $('#qgo').disabled=true;$('#qbody').innerHTML='';
   const schema=Object.entries(DB).map(([t,r])=>`${t}(${Object.keys(r[0]).join(', ')})`).join('\n');
-  const prompt=`Ты составляешь тест для SQL-тренажёра. Таблицы учебной базы:\n${schema}\nstatus в orders: paid, new, cancelled.\nТема от ученика: "${q}"\nОпечатки и грамматические ошибки игнорируй: если по смыслу запрос про SQL, базы данных или эти таблицы — составь тест по этой теме. Если запрос совсем не по теме сайта (бессмыслица, спам, посторонняя тема) — верни только JSON {"error":"короткое объяснение"}.\nСложность: ${lv}.\nСоставь 5 разных вопросов на русском с 4 правдоподобными вариантами ответов и ровно одним правильным. Вопросы короткие и однозначные, без подвоха. Правильные ответы распределяй по разным позициям. Верни только JSON {"questions":[{"q":"вопрос","options":["вариант","вариант","вариант","вариант"],"answer":0,"explain":"одно предложение объяснения"}]}, где answer — индекс правильного варианта от 0 до 3.`;
+  const prompt=`Ты составляешь тест для SQL-тренажёра. Таблицы учебной базы:\n${schema}\nstatus в orders: paid, new, cancelled.\nТема от ученика: "${q}"\nОпечатки и грамматические ошибки игнорируй: если по смыслу запрос про SQL, базы данных или эти таблицы — составь тест по этой теме. Если запрос совсем не по теме сайта (бессмыслица, спам, посторонняя тема) — верни только JSON {"error":"короткое объяснение"}.\nСложность: ${lv}.\nСоставь ровно ${n} разных вопросов на русском с 4 правдоподобными вариантами ответов и ровно одним правильным. Вопросы короткие и однозначные, без подвоха. Правильные ответы распределяй по разным позициям. Верни только JSON {"questions":[{"q":"вопрос","options":["вариант","вариант","вариант","вариант"],"answer":0,"explain":"одно предложение объяснения"}]}, где answer — индекс правильного варианта от 0 до 3.`;
   let j=null,err='',refused='';
   for(let att=1;att<=3&&!j&&!refused;att++){
     m.innerHTML=`<div class="msg info">ИИ составляет вопросы… (попытка ${att}/3)</div>`;
     try{
-      const cand=await callLLM(err?prompt+`\nПредыдущий твой ответ не прошёл проверку: ${err}. Исправься и верни корректный JSON.`:prompt,30000);
+      const cand=await callLLM(err?prompt+`\nПредыдущий твой ответ не прошёл проверку: ${err}. Исправься и верни корректный JSON.`:prompt, tmo);
       if(cand&&cand.error){refused=String(cand.error);break}
-      j=normQuiz(cand);
+      j=normQuiz(cand,n);
       if(!j)err='нужен JSON {"questions":[...]}: у каждого вопроса 4 варианта ответа и answer — индекс правильного (0–3)';
-    }catch(e){err=e.name==='AbortError'?'ИИ не ответил вовремя (таймаут 30 с)':e.message||String(e);if(/\((4\d\d)\)/.test(err)&&!/\(429\)/.test(err))break} // при постоянных ошибках (4xx) повторять бессмысленно — выходим сразу
+    }catch(e){err=e.name==='AbortError'?'ИИ не ответил вовремя (таймаут '+(tmo/1000)+' с)':e.message||String(e);if(/\((4\d\d)\)/.test(err)&&!/\(429\)/.test(err))break} // при постоянных ошибках (4xx) повторять бессмысленно — выходим сразу
   }
   if(refused){m.innerHTML=`<div class="msg bad">Запрос не по теме сайта: ${esc(refused)} Опишите, что проверить в SQL — можно своими словами и с опечатками.</div>`}
   else if(j){quiz=j;saveQuiz();renderQuiz();m.innerHTML=''}
-  else{quiz={questions:pickBank(q)};saveQuiz();renderQuiz();m.innerHTML=`<div class="msg info">ИИ недоступен (${esc(err)}), тест составлен из встроенного банка вопросов. Проверьте настройки ИИ (кнопка настроек в правом нижнем углу).</div>`}
+  else{quiz={questions:pickBank(q,n)};saveQuiz();renderQuiz();m.innerHTML=`<div class="msg info">ИИ недоступен (${esc(err)}), тест составлен из встроенного банка вопросов. Проверьте настройки ИИ (кнопка настроек в правом нижнем углу).</div>`}
   $('#qgo').disabled=false;
 };
 $('#qbody').onclick=e=>{
